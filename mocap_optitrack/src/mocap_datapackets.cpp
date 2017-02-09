@@ -32,12 +32,22 @@ const geometry_msgs::PoseStamped RigidBody::get_ros_pose()
     // Eric Cristofalo 20170124
     // XY-Ground Plane, -Z Up Coordinate System Coordinate System
     // Euler Angles Transformed to ZYX Euler Angles About Raw Optitrack Coordinate System
+//    ros_pose.pose.position.x = -pose.position.x;
+//    ros_pose.pose.position.y = -pose.position.z;
+//    ros_pose.pose.position.z = -pose.position.y;
+//    ros_pose.pose.orientation.x = pose.orientation.x;
+//    ros_pose.pose.orientation.y = -pose.orientation.z;
+//    ros_pose.pose.orientation.z = pose.orientation.y;
+//    ros_pose.pose.orientation.w = pose.orientation.w;
+
+    // Zijian Wang 20170207
+    // Accommodate for NED (north-east-down) axis defined in px4 
     ros_pose.pose.position.x = -pose.position.x;
     ros_pose.pose.position.y = -pose.position.z;
     ros_pose.pose.position.z = -pose.position.y;
-    ros_pose.pose.orientation.x = pose.orientation.x;
+    ros_pose.pose.orientation.x = -pose.orientation.x;
     ros_pose.pose.orientation.y = -pose.orientation.z;
-    ros_pose.pose.orientation.z = pose.orientation.y;
+    ros_pose.pose.orientation.z = -pose.orientation.y;
     ros_pose.pose.orientation.w = pose.orientation.w;
     
   return ros_pose;
