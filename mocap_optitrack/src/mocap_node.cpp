@@ -106,7 +106,7 @@ int main( int argc, char* argv[] )
   // Initialize ROS node
   ros::init(argc, argv, "mocap_node");
   ros::NodeHandle n("~");
-
+    
   // Get configuration from ROS parameter server  
   const char** mocap_model( DEFAULT_MOCAP_MODEL );
   if( n.hasParam( MOCAP_MODEL_KEY ) )
