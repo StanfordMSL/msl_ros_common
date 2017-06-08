@@ -9,7 +9,7 @@ Date Created: 2017/06/08; Date Last Modified: 2017/06/08
 
 Tested on: ROS Kinetic
 
-#mocap_optitrack
+# mocap_optitrack
 Standard ROS package for publishing data from Optitrack:
 http://wiki.ros.org/mocap_optitrack
 
@@ -19,8 +19,7 @@ http://wiki.ros.org/mocap_optitrack
 * mocap.yaml
 	* Configuration file that defines the rigib body topics to be defined by mocap_otitrack. If you are using mutiple rigid bodies, uncomment sections of this configuration file
 
-
-#mocap_interface
+# mocap_interface
 This package contains an interfacing node and launch file for the mocap_optitrack package. The idea is to use this package to communicate transform the original data from mocap_optitrack into the coordinate frames used in lab. 
 
 ## Requirements
