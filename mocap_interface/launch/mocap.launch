@@ -1,0 +1,53 @@
+<!-- 
+ File Name:         mocap.launch
+ Date Created:      2017/06/08
+ Date Modified:     2017/06/08
+ 
+ Author:            Eric Cristofalo
+ Contact:           eric.cristofalo@gmail.com
+ 
+ Description:       ROS launch file for mocap_interface package
+-->
+
+<launch>
+
+  <!-- Pass in mocap_config_file:=/path/to/config.yaml to change options. -->
+  <arg name="mocap_config_file"
+    default="$(find mocap_interface)/config/mocap.yaml" />
+
+  <node pkg="mocap_optitrack" type="mocap_node" name="mocap_node" respawn="false" launch-prefix="" required="true" output="screen">
+    <rosparam file="$(arg mocap_config_file)" command="load" />
+  </node>
+
+  <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_1" respawn="false" launch-prefix="" required="true" output="screen">
+    <remap from="/robot/pose" to="/robot_1/pose"/>
+    <remap from="/robot/twist" to="/robot_1/twist"/>
+    <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
+    <param name="DISPLAY_DATA_BOOL" type="int" value="0" />
+  </node>
+
+<!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_2" respawn="false" launch-prefix="" required="true" output="screen">
+    <remap from="/robot/pose" to="/robot_2/pose"/>
+    <remap from="/robot/twist" to="/robot_2/twist"/>
+    <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
+  </node> -->
+
+<!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_3" respawn="false" launch-prefix="" required="true" output="screen">
+    <remap from="/robot/pose" to="/robot_3/pose"/>
+    <remap from="/robot/twist" to="/robot_3/twist"/>
+    <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
+  </node> -->
+
+<!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_4" respawn="false" launch-prefix="" required="true" output="screen">
+    <remap from="/robot/pose" to="/robot_4/pose"/>
+    <remap from="/robot/twist" to="/robot_4/twist"/>
+    <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
+  </node> -->
+
+<!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_5" respawn="false" launch-prefix="" required="true" output="screen">
+    <remap from="/robot/pose" to="/robot_5/pose"/>
+    <remap from="/robot/twist" to="/robot_5/twist"/>
+    <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
+  </node> -->
+
+</launch>
