@@ -26,6 +26,11 @@ This package contains an interfacing node and launch file for the mocap_optitrac
 
 ## Files
 * mocap_interface.cpp
+	* Reads raw Optitrack data and output's rigid body pose in geometry_msgs/Twist 
+    * COORDINATE_FRAME_INDEX: coordinate frame index (0 for native mocap_optitrack output)
+    * DISPLAY_DATA_BOOL: integer indicator for printing data during testing (1 displays data)
+* mocap_interface_tf.cpp
+	* Reads raw Optitrack data and output's rigid body transformation in tf2_msgs/TFMessage 
     * COORDINATE_FRAME_INDEX: coordinate frame index (0 for native mocap_optitrack output)
     * DISPLAY_DATA_BOOL: integer indicator for printing data during testing (1 displays data)
 * mocap.yaml

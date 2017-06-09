@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  tf
 )
 
 SET(CMAKE_BUILD_TYPE distribution)
@@ -175,4 +176,8 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(mocap_interface src/mocap_interface.cpp)
 target_link_libraries(mocap_interface ${catkin_LIBRARIES})
 add_dependencies(mocap_interface mocap_interface_generate_messages_cpp)
+
+# add_executable(mocap_interface_tf src/mocap_interface_tf.cpp)
+# target_link_libraries(mocap_interface_tf ${catkin_LIBRARIES})
+# add_dependencies(mocap_interface_tf mocap_interface_generate_messages_cpp)
 

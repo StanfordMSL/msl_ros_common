@@ -1,7 +1,7 @@
 <!-- 
  File Name:         mocap.launch
  Date Created:      2017/06/08
- Date Modified:     2017/06/08
+ Date Modified:     2017/06/09
  
  Author:            Eric Cristofalo
  Contact:           eric.cristofalo@gmail.com
@@ -11,7 +11,7 @@
 
 <launch>
 
-  <!-- Pass in mocap_config_file:=/path/to/config.yaml to change options. -->
+  <!-- ========== MOCAP_OPTITRACK ========== -->
   <arg name="mocap_config_file"
     default="$(find mocap_interface)/config/mocap.yaml" />
 
@@ -19,13 +19,20 @@
     <rosparam file="$(arg mocap_config_file)" command="load" />
   </node>
 
-  <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_1" respawn="false" launch-prefix="" required="true" output="screen">
+  <!-- ========== LINK BETWEEN ROBOT RIGID BODY MARKER AND REAL ROBOT'S CENTER OF MASS ========== -->
+  <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
+    args="0 0 0.8 0 0 0 /robot_1/base_link /com_link 100">
+  </node>
+
+  <!-- ========== MOCAP_INTERFACE ========== -->
+<!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_1" respawn="false" launch-prefix="" required="true" output="screen">
     <remap from="/robot/pose" to="/robot_1/pose"/>
     <remap from="/robot/twist" to="/robot_1/twist"/>
     <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
     <param name="DISPLAY_DATA_BOOL" type="int" value="0" />
-  </node>
+  </node> -->
 
+  <!-- ========== UNCOMMENT BELOW TO ADD MORE ROBOTS ========== -->
 <!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_2" respawn="false" launch-prefix="" required="true" output="screen">
     <remap from="/robot/pose" to="/robot_2/pose"/>
     <remap from="/robot/twist" to="/robot_2/twist"/>

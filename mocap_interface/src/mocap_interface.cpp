@@ -27,7 +27,6 @@ class mocapInterfaceClass {
   ros::NodeHandle nh_;
   
   ros::Subscriber process_mocap_sub_;
-  // geometry_msgs::PoseStamped poseMsg;
 
   ros::Publisher pose_out_pub_;
   geometry_msgs::Twist poseOutMsg;
