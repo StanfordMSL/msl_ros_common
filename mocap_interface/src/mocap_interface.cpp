@@ -38,10 +38,10 @@ public:
   mocapInterfaceClass(int a, int b) {
 
     // Subscribe to Optitrack Topics
-    process_mocap_sub_ = nh_.subscribe("/robot/pose", 1, &mocapInterfaceClass::mocapCallback, this);
+    process_mocap_sub_ = nh_.subscribe("/robot/pose", 10, &mocapInterfaceClass::mocapCallback, this);
 
     // Publish Ground Robot Ground Truth
-    pose_out_pub_ = nh_.advertise<geometry_msgs::Twist>("/robot/twist", 1);
+    pose_out_pub_ = nh_.advertise<geometry_msgs::Twist>("/robot/twist", 10);
 
     // Initialize Variables
     frameIndex = a;
