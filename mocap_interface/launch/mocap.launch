@@ -19,10 +19,23 @@
     <rosparam file="$(arg mocap_config_file)" command="load" />
   </node>
 
-  <!-- ========== LINK BETWEEN ROBOT RIGID BODY MARKER AND REAL ROBOT'S CENTER OF MASS ========== -->
-  <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
-    args="0 0 0.1 0 0 0 /robot_1/base_link /base_link 100">
+  <!-- ========== RVIZ (OPTIONAL) ========== -->
+  <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen" 
+    args="-f world_rviz -d $(find mocap_interface)/rviz/mocap_interface.rviz" required="true">
   </node>
+  <!-- ========== LINK BETWEEN MOCAP_OPTITRACK WORLD AND RVIZ WORLD ========== -->
+  <node pkg="tf" type="static_transform_publisher" name="trans_pub_rviz_world"
+    args="0 0 0 1.5708 0 3.1415 /world_rviz /world 10">
+  </node>
+    <!-- ========== LINK BETWEEN ODOM_FRAME AND MOCAP_OPTITRACK WORLD ========== -->
+  <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
+    args="0 0 0 0 0 0 /world /odom_frame 10">
+  </node>
+
+  <!-- ========== LINK BETWEEN ROBOT RIGID BODY MARKER AND REAL ROBOT'S CENTER OF MASS ========== -->
+<!--   <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
+    args="0 0 0.1 0 0 0 /robot_1/base_link /base_link 100">
+  </node> -->
 
   <!-- ========== MOCAP_INTERFACE ========== -->
 <!--   <node pkg="mocap_interface" type="mocap_interface" name="mocap_interface_1" respawn="false" launch-prefix="" required="true" output="screen">
@@ -37,10 +50,10 @@
     <remap from="/robot/pose" to="/robot_1/pose"/>
     <remap from="/robot/odom" to="/robot_1/odom"/>
     <param name="DISPLAY_DATA_BOOL" type="int" value="1" />
-    <param name="POSITION_COVARIANCE" type="double" value="0.1" />
-    <param name="ORIENTATION_COVARIANCE" type="double" value="0.1" />
-    <param name="VELOCITY_COVARIANCE" type="double" value="0.1" />
-    <param name="ROTATION_RATE_COVARIANCE" type="double" value="0.1" />
+    <param name="POSITION_COVARIANCE" type="double" value="0.0" />
+    <param name="ORIENTATION_COVARIANCE" type="double" value="0.0" />
+    <param name="VELOCITY_COVARIANCE" type="double" value="0.00001" />
+    <param name="ROTATION_RATE_COVARIANCE" type="double" value="0.00001" />
   </node>
 
   <!-- ========== UNCOMMENT BELOW TO ADD MORE ROBOTS ========== -->

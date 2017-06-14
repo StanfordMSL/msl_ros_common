@@ -29,15 +29,20 @@ class mocapInterfaceClass {
   ros::NodeHandle nh_;
   
   ros::Subscriber process_mocap_sub_;
+  
   ros::Publisher odom_pub_;
   
   // Initialize Variables
   int displayData;
   double positionCovariance, orientationCovariance, velocityCovariance, rotationRateCovariance;
+  int addNoise;
   ros::Time timeCur, timePrev;
-  double xCur, yCur, zCur, phiCur, theCur, psiCur;
-  double xPrev, yPrev, zPrev, phiPrev, thePrev, psiPrev;
-    
+  int initialize, initCount;
+  double initTime;
+  double xInit, yInit, zInit, phiInit, theInit, psiInit;
+  double x_, y_, z_, phi_, the_, psi_;
+  double xOdom_, yOdom_, zOdom_, phiOdom_, theOdom_, psiOdom_;
+
 public:
   mocapInterfaceClass(int a, double b, double c, double d, double e) {
 
@@ -53,50 +58,131 @@ public:
     orientationCovariance = c;
     velocityCovariance = d;
     rotationRateCovariance = e;
+    addNoise = 0;
+    if (positionCovariance!=0.0 || orientationCovariance!=0.0 || velocityCovariance!=0.0 || rotationRateCovariance!=0.0) {
+      addNoise = 1;
+    }
     timeCur = ros::Time::now();
     timePrev = ros::Time::now();
-    xCur = 0.0; yCur = 0.0; zCur = 0.0; phiCur = 0.0; theCur = 0.0; psiCur = 0.0;
-    xPrev = 0.0; yPrev = 0.0; zPrev = 0.0; phiPrev = 0.0; thePrev = 0.0; psiPrev = 0.0;
+    initialize = 1; 
+    initCount = 0;
+    initTime = 0.0;
+    xInit = 0.0; yInit = 0.0; zInit = 0.0; phiInit = 0.0; theInit = 0.0; psiInit = 0.0;
+    x_ = 0.0; y_ = 0.0; z_ = 0.0; phi_ = 0.0; the_ = 0.0; psi_ = 0.0;
+    xOdom_ = 0.0; yOdom_ = 0.0; zOdom_ = 0.0; phiOdom_ = 0.0; theOdom_ = 0.0; psiOdom_ = 0.0;
+
+    // std::cout << "Listening to Optitrack for 1 Seconds" << std::endl;
   }
 
   void mocapCallback(const geometry_msgs::PoseStamped& msg)
   {
     // Extract Data
-    double qx, qy, qz, qw;
-    xCur = msg.pose.position.x;
-    yCur = msg.pose.position.y;
-    zCur = msg.pose.position.z;
-    qx = msg.pose.orientation.x;
-    qy = msg.pose.orientation.y;
-    qz = msg.pose.orientation.z;
-    qw = msg.pose.orientation.w;
+    double xCur = msg.pose.position.x;
+    double yCur = msg.pose.position.y;
+    double zCur = msg.pose.position.z;
+    double qx = msg.pose.orientation.x;
+    double qy = msg.pose.orientation.y;
+    double qz = msg.pose.orientation.z;
+    double qw = msg.pose.orientation.w;
 
     // Conversion to Euler Angles
+    double phiCur, theCur, psiCur;
     tf::Quaternion q(qx, qy, qz, qw);
     tf::Matrix3x3 m(q);
     m.getRPY(phiCur, theCur, psiCur);
 
-    if (xPrev!=0.0 && yPrev!=0.0) {
+    // Initialize Starting Robot Pose
+    if (initialize==1) {
+      timeCur = ros::Time::now();
+      // Add Poses
+      double dt = (timeCur-timePrev).toSec();
+      initTime = initTime + dt;
+      if ( initTime<1.0 ) {
+        initCount++;
+        xInit = xInit + xCur;
+        yInit = yInit + yCur;
+        zInit = zInit + zCur;
+        phiInit = phiInit + phiCur;
+        theInit = theInit + theCur;
+        psiInit = psiInit + psiCur;
+      }
+      else {
+        // Average Poses
+        xInit = xInit/double(initCount);
+        yInit = yInit/double(initCount);
+        zInit = zInit/double(initCount);
+        phiInit = phiInit/double(initCount);
+        theInit = theInit/double(initCount);
+        psiInit = psiInit/double(initCount);
+        timePrev = ros::Time::now();
+        initialize = 0;
+        std::cout << "Initial Pose:" << endl << "x: " << xInit << endl << "y: " << yInit << endl << "psi: " << psiInit << endl << endl;
+        // Set Previous Values
+        timePrev = ros::Time::now();
+        x_ = xInit;
+        y_ = yInit;
+        z_ = zInit;
+        phi_ = phiInit;
+        the_ = theInit;
+        psi_ = psiInit;
+        xOdom_ = xInit;
+        yOdom_ = yInit;
+        zOdom_ = 0.0;
+        phiOdom_ = 0.0;
+        theOdom_ = 0.0;
+        psiOdom_ = psiInit;
+      }
+    }
 
+    else { // Compute Odometry
       // Current Time
       timeCur = ros::Time::now();
 
+      // Add Noise to Velocity Estimate
+      double dt = (timeCur-timePrev).toSec();
+      double vx = (xCur-x_)*dt;
+      double vy = (yCur-y_)*dt;
+      // double vz = (zCur-z_)*dt;
+      // double vphi = (phiCur-phi_)*dt;
+      // double vthe = (theCur-the_)*dt;
+      double vpsi = (psiCur-psi_)*dt;
+      if (addNoise==1) {
+        const double mu = 0.0;
+        std::random_device rd;
+        std::mt19937 generator(rd());
+        std::normal_distribution<double> vxNoise(mu,velocityCovariance);
+        std::normal_distribution<double> vyNoise(mu,velocityCovariance);
+        std::normal_distribution<double> vpsiNoise(mu,rotationRateCovariance);
+        vx = vx + vxNoise(generator);
+        vy = vy + vyNoise(generator);
+        vpsi = vpsi + vpsiNoise(generator);
+      }
+
       // Add Noise in Planar Coordinates Only
-      const double mean = 0.0;
-      std::default_random_engine generator(time(0));
-      std::normal_distribution<double> xNoise(mean,positionCovariance);
-      std::normal_distribution<double> yNoise(mean,positionCovariance);
-      std::normal_distribution<double> psiNoise(mean,orientationCovariance);
-      double xOdom = xCur + xNoise(generator);
-      double yOdom = yCur + yNoise(generator);
-      double psiOdom = psiCur + psiNoise(generator);
+      double xOdom = xOdom_;
+      double yOdom = yOdom_;
+      double psiOdom = psiOdom_;
+      if (addNoise==1) {
+        const double mu = 0.0;
+        std::random_device rd;
+        std::mt19937 generator(rd());
+        std::normal_distribution<double> xNoise(mu,positionCovariance);
+        std::normal_distribution<double> yNoise(mu,positionCovariance);
+        std::normal_distribution<double> psiNoise(mu,orientationCovariance);
+        xOdom = xOdom + xNoise(generator);
+        yOdom = yOdom + yNoise(generator);
+        psiOdom = psiOdom + psiNoise(generator);
+      }
+      xOdom = xOdom + vx/dt;
+      yOdom = yOdom + vy/dt;
+      psiOdom = psiOdom + vpsi/dt;
 
       // Publish Odometry Transform
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(psiOdom);
       geometry_msgs::TransformStamped odom_trans;
       odom_trans.header.stamp = timeCur;
-      odom_trans.header.frame_id = "odom_frame";
-      odom_trans.child_frame_id = "base_link";
+      odom_trans.header.frame_id = "/odom_frame";
+      odom_trans.child_frame_id = "/base_link";
       odom_trans.transform.translation.x = xOdom;
       odom_trans.transform.translation.y = yOdom;
       odom_trans.transform.translation.z = 0.0;
@@ -107,29 +193,14 @@ public:
       // Set Final Planar Pose
       nav_msgs::Odometry odomMsg;
       odomMsg.header.stamp = timeCur;
-      odomMsg.header.frame_id = "odom_frame";
+      odomMsg.header.frame_id = "/odom_frame";
       odomMsg.pose.pose.position.x = xOdom;
       odomMsg.pose.pose.position.y = yOdom;
       odomMsg.pose.pose.position.z = 0.0;
       odomMsg.pose.pose.orientation = odom_quat;
 
-      // Add Noise to Velocity Estimate
-      double dt = (timeCur-timePrev).toSec();
-      double vx = (xCur-xPrev)*dt;
-      double vy = (yCur-yPrev)*dt;
-      // double vz = (zCur-zPrev)*dt;
-      // double vphi = (phiCur-phiPrev)*dt;
-      // double vthe = (theCur-thePrev)*dt;
-      double vpsi = (psiCur-psiPrev)*dt;
-      std::normal_distribution<double> vxNoise(mean,velocityCovariance);
-      std::normal_distribution<double> vyNoise(mean,velocityCovariance);
-      std::normal_distribution<double> vpsiNoise(mean,rotationRateCovariance);
-      vx = vx + vxNoise(generator);
-      vy = vy + vyNoise(generator);
-      vpsi = vpsi + vpsiNoise(generator);
-
       // Set Final Planar Velocity
-      odomMsg.child_frame_id = "base_link";
+      odomMsg.child_frame_id = "/base_link";
       odomMsg.twist.twist.linear.x = vx;
       odomMsg.twist.twist.linear.y = vy;
       odomMsg.twist.twist.linear.z = 0.0;
@@ -141,37 +212,31 @@ public:
       odom_pub_.publish(odomMsg);
 
       // Set Previous Values
-      xPrev = xCur;
-      yPrev = yCur;
-      zPrev = zCur;
-      phiPrev = phiCur;
-      thePrev = theCur;
-      psiPrev = psiCur;
       timePrev = timeCur;
+      x_ = xCur;
+      y_ = yCur;
+      z_ = zCur;
+      phi_ = psiCur;
+      the_ = theCur;
+      psi_ = psiCur;
+      xOdom_ = xOdom;
+      yOdom_ = yOdom;
+      zOdom_ = 0.0;
+      phiOdom_ = 0.0;
+      theOdom_ = 0.0;
+      psiOdom_ = psiOdom;
 
       // Display Data
       if (displayData==1) {
-        std::cout << "Planar Pose:" << endl << "x: " << xCur << endl << "y: " << yCur << endl << "psi: " << psiCur << endl << endl;
-        std::cout << "Noisy Odometry:" << endl << "x: " << xOdom << endl << "y: " << yOdom << endl << "psi: " << psiOdom << endl << endl;
-        std::cout << "Velocity:" << endl << "vx: " << vx << endl << "vy: " << vy << endl << "vpsi: " << vpsi << endl << endl;
+        std::cout << "Ground Truth Pose:" << endl << "x: " << xCur << endl << "y: " << yCur << endl << "psi: " << psiCur << endl << endl;
+        std::cout << "Odometry Pose:" << endl << "x: " << xOdom << endl << "y: " << yOdom << endl << "psi: " << psiOdom << endl << endl;
+        // std::cout << "Velocity:" << endl << "vx: " << vx << endl << "vy: " << vy << endl << "vpsi: " << vpsi << endl << endl;
       }
 
-    }
+    } // and if not initializing
 
-    else {
+  } // end processMocap
 
-      // Set Previous Values
-      xPrev = xCur;
-      yPrev = yCur;
-      zPrev = zCur;
-      phiPrev = phiCur;
-      thePrev = theCur;
-      psiPrev = psiCur;
-      timePrev = timeCur;
-
-    }
-
-  }
 };
 
 int main(int argc, char **argv)
