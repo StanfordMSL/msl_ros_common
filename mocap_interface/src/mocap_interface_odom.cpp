@@ -31,6 +31,8 @@ class mocapInterfaceClass {
   ros::Subscriber process_mocap_sub_;
   
   ros::Publisher odom_pub_;
+
+  tf::TransformBroadcaster odom_broadcaster;
   
   // Initialize Variables
   int displayData;
@@ -158,6 +160,11 @@ public:
         vpsi = vpsi + vpsiNoise(generator);
       }
 
+      // Compute Velocity in Body Frame (/base_link)
+      // v^b = R_bg v^g
+      double vxLocal = cos(psiOdom_)*vx + sin(psiOdom_)*vy;
+      double vyLocal = -sin(psiOdom_)*vx + cos(psiOdom_)*vy;
+
       // Add Noise in Planar Coordinates Only
       double xOdom = xOdom_;
       double yOdom = yOdom_;
@@ -187,8 +194,8 @@ public:
       odom_trans.transform.translation.y = yOdom;
       odom_trans.transform.translation.z = 0.0;
       odom_trans.transform.rotation = odom_quat;
-      tf::TransformBroadcaster odom_broadcaster;
       odom_broadcaster.sendTransform(odom_trans);
+      usleep(1000);
 
       // Set Final Planar Pose
       nav_msgs::Odometry odomMsg;
@@ -201,8 +208,8 @@ public:
 
       // Set Final Planar Velocity
       odomMsg.child_frame_id = "/base_link";
-      odomMsg.twist.twist.linear.x = vx;
-      odomMsg.twist.twist.linear.y = vy;
+      odomMsg.twist.twist.linear.x = vxLocal;
+      odomMsg.twist.twist.linear.y = vyLocal;
       odomMsg.twist.twist.linear.z = 0.0;
       odomMsg.twist.twist.angular.x = 0.0;
       odomMsg.twist.twist.angular.y = 0.0;
@@ -230,7 +237,7 @@ public:
       if (displayData==1) {
         std::cout << "Ground Truth Pose:" << endl << "x: " << xCur << endl << "y: " << yCur << endl << "psi: " << psiCur << endl << endl;
         std::cout << "Odometry Pose:" << endl << "x: " << xOdom << endl << "y: " << yOdom << endl << "psi: " << psiOdom << endl << endl;
-        // std::cout << "Velocity:" << endl << "vx: " << vx << endl << "vy: " << vy << endl << "vpsi: " << vpsi << endl << endl;
+        std::cout << "Body Frame Velocity:" << endl << "vxLocal: " << vxLocal << endl << "vyLocal: " << vyLocal << endl << "vpsi: " << vpsi << endl << endl;
       }
 
     } // and if not initializing

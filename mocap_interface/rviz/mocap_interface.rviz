@@ -7,9 +7,10 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1
-        - /TF1/Status1
         - /TF1/Frames1
         - /Axes1
+        - /Odometry1
+        - /Odometry1/Status1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -84,11 +85,21 @@ Visualization Manager:
       Update Interval: 0
       Value: true
     - Class: rviz/Axes
-      Enabled: true
+      Enabled: false
       Length: 0.5
       Name: Axes
       Radius: 0.100000001
       Reference Frame: base_link
+      Value: false
+    - Angle Tolerance: 0.100000001
+      Class: rviz/Odometry
+      Color: 255; 25; 0
+      Enabled: true
+      Keep: 25
+      Length: 0.25
+      Name: Odometry
+      Position Tolerance: 0.100000001
+      Topic: /robot_1/odom
       Value: true
   Enabled: true
   Global Options:
@@ -114,7 +125,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.27878451
+      Distance: 4.79831171
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -128,10 +139,10 @@ Visualization Manager:
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.464797258
+      Pitch: 0.734796643
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.93362999
+      Yaw: 5.21362162
     Saved: ~
 Window Geometry:
   Displays:

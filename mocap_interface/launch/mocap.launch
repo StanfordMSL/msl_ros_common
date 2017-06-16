@@ -25,11 +25,19 @@
   </node>
   <!-- ========== LINK BETWEEN MOCAP_OPTITRACK WORLD AND RVIZ WORLD ========== -->
   <node pkg="tf" type="static_transform_publisher" name="trans_pub_rviz_world"
-    args="0 0 0 1.5708 0 3.1415 /world_rviz /world 10">
+    args="0 0 0 1.5708 0 3.1415 /world_rviz /world 100">
   </node>
     <!-- ========== LINK BETWEEN ODOM_FRAME AND MOCAP_OPTITRACK WORLD ========== -->
   <node pkg="tf" type="static_transform_publisher" name="static_transform_publisher"
-    args="0 0 0 0 0 0 /world /odom_frame 10">
+    args="0 0 0 0 0 0 /world /odom_frame 100">
+  </node>
+
+    <!-- ========== JOY (OPTIONAL) ========== -->
+  <node name="joy_node" pkg="joy" type="joy_node" output="screen">
+  </node>
+  <!-- ========== OUIJABOT TELEOP (OPTIONAL) ========== -->
+  <node name="telop" pkg="ouijabot_telop_cpp" type="telop"  output="screen">
+    <remap from="vel_out" to="/ouijabot1/cmd_vel" /> <!-- change the index of the robot here -->
   </node>
 
   <!-- ========== LINK BETWEEN ROBOT RIGID BODY MARKER AND REAL ROBOT'S CENTER OF MASS ========== -->
@@ -49,11 +57,11 @@
   <node pkg="mocap_interface" type="mocap_interface_odom" name="mocap_interface_odom_1" respawn="false" launch-prefix="" required="true" output="screen">
     <remap from="/robot/pose" to="/robot_1/pose"/>
     <remap from="/robot/odom" to="/robot_1/odom"/>
-    <param name="DISPLAY_DATA_BOOL" type="int" value="1" />
+    <param name="DISPLAY_DATA_BOOL" type="int" value="0" />
     <param name="POSITION_COVARIANCE" type="double" value="0.0" />
     <param name="ORIENTATION_COVARIANCE" type="double" value="0.0" />
     <param name="VELOCITY_COVARIANCE" type="double" value="0.00001" />
-    <param name="ROTATION_RATE_COVARIANCE" type="double" value="0.00001" />
+    <param name="ROTATION_RATE_COVARIANCE" type="double" value="0.000001" />
   </node>
 
   <!-- ========== UNCOMMENT BELOW TO ADD MORE ROBOTS ========== -->
