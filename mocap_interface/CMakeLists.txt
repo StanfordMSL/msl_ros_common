@@ -91,7 +91,7 @@ SET(CMAKE_C_FLAGS_DISTRIBUTION "-O3")
 catkin_package(
  # INCLUDE_DIRS include
 #  LIBRARIES example_serial
-CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+CATKIN_DEPENDS roscpp rospy std_msgs message_runtime tf
 #  DEPENDS system_lib
 )
 

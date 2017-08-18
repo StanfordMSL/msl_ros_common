@@ -5,7 +5,7 @@ Author: Eric Cristofalo
 
 Affiliation: Stanford University
 
-Date Created: 2017/06/08; Date Last Modified: 2017/06/08
+Date Created: 2017/06/08; Date Last Modified: 2017/08/18
 
 Tested on: ROS Kinetic
 
@@ -26,11 +26,11 @@ This package contains an interfacing node and launch file for the mocap_optitrac
 
 ## Files
 * mocap_interface.cpp
-	* Reads raw Optitrack data and outputs rigid body pose in geometry_msgs/Twist 
+	* Reads raw Optitrack data and outputs 6DOF rigid body pose in geometry_msgs/Twist for convenience
     * COORDINATE_FRAME_INDEX: coordinate frame index (0 for native mocap_optitrack output)
     * DISPLAY_DATA_BOOL: integer indicator for printing data during testing (1 displays data)
 * mocap_interface_odom.cpp
-	* Reads raw Optitrack data and outputs a nav_msgs/Odometry message for SLAM packages 
+	* Reads raw Optitrack data and outputs a nav_msgs/Odometry and geometry_msgs/accel messages for 6DOF {position and velocity}, and acceleration estimated from raw Optitrack data 
     * DISPLAY_DATA_BOOL: integer indicator for printing data during testing (1 displays data)
     * POSITION_COVARIANCE: double for position covariance
     * ORIENTATION_COVARIANCE: double for orientation covariance
