@@ -1,0 +1,183 @@
+<!-- 
+ File Name:         simulation.launch
+ Date Created:      2017/06/20
+ Date Modified:     2017/08/26
+ 
+ Author:            Eric Cristofalo
+ Contact:           eric.cristofalo@gmail.com
+ 
+ Description:       ROS launch file for ec_filter package
+-->
+
+<launch>
+
+  <!-- ========== ARGUMENTS FOR FIREFLY (ORANGE BALL) ========== -->
+<!--   <arg name="mav_name" default="firefly_and_ball" />
+  <arg name="rob_name" default="firefly_and_ball1" />
+  <arg name="opp_name" default="firefly_and_ball2" />
+  <arg name="COLOR_1" default="82"/> 
+  <arg name="COLOR_2" default="249"/>
+  <arg name="COLOR_3" default="83"/>
+  <arg name="VAR_1" default="60.0"/>
+  <arg name="VAR_2" default="10.0"/>
+  <arg name="VAR_3" default="30.0"/>
+  <arg name="ball_radius" default="0.05" /> -->
+
+  <!-- ========== ARGUMENTS FOR HUMMINGBIRD (YELLOW BALL) ========== -->
+  <arg name="mav_name" default="hummingbird_ball" />
+  <arg name="rob_name" default="hummingbird_ball1" />
+  <arg name="opp_name" default="hummingbird_ball2" />
+  <arg name="COLOR_1" default="200"/> 
+  <arg name="COLOR_2" default="152"/>
+  <arg name="COLOR_3" default="25"/>
+  <arg name="VAR_1" default="100.0"/>
+  <arg name="VAR_2" default="10.0"/>
+  <arg name="VAR_3" default="30.0"/>
+  <arg name="sphere_radius" default="0.05" />
+
+  <!-- ========== MANUAL CONTROL VIA JOYSTICK AND RVIZ ========== -->
+<!--   <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen" 
+    args="-f world -d $(find ec_quad_sim)/rviz/simulation.rviz" required="true">
+  </node> -->
+  <node name="joy_node" pkg="joy" type="joy_node" respawn="false" output="screen"/>
+  <node name="waypoint_quad_control" pkg="msl_rotors_simulation" type="waypoint_quad_control" respawn="false" output="screen">
+    <remap from="/quad1_pose" to="/$(arg mav_name)1/ground_truth/pose"/>
+    <remap from="/quad2_pose" to="/$(arg mav_name)2/ground_truth/pose"/>
+    <remap from="/quad1_measurement" to="/$(arg mav_name)1/measurement_out_gt"/>
+    <remap from="/quad2_measurement" to="/$(arg mav_name)2/measurement_out_gt"/>
+    <remap from="/quad1_command" to="/$(arg mav_name)1/command/trajectory"/>
+    <remap from="/quad2_command" to="/$(arg mav_name)2/command/trajectory"/>
+    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="CONTROLLER_INDEX" type="int" value="1"/>
+  </node>
+
+  <!-- ========== PLOTTING ========== -->
+<!--   <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen" 
+    args="-f world -d $(find ec_filter)/rviz/simulation.rviz" required="true">
+  </node> -->
+<!--   <node pkg="rqt_plot" type="rqt_plot" name="plot_ground_truth" output="screen" 
+    args="
+      $(arg rob_name)/ground_truth/odometry/twist/twist/angular/x:y:z
+    "
+  /> -->
+<!--   <node pkg="rqt_plot" type="rqt_plot" name="plot_measurement" output="screen" 
+    args="
+      $(arg rob_name)/measurement_out_gt/linear/x:y:z
+      $(arg rob_name)/measurement_out/linear/x:y:z 
+    "
+  /> -->
+  <node pkg="rqt_plot" type="rqt_plot" name="plot_position" output="screen" 
+    args="
+      $(arg rob_name)/vision_estimate_gt/pose/pose/position/x:y:z
+      $(arg rob_name)/vision_estimate/pose/pose/position/x:y:z 
+    "
+  />
+  <node pkg="rqt_plot" type="rqt_plot" name="plot_velocity" output="screen" 
+    args="
+      $(arg rob_name)/vision_estimate_gt/twist/twist/linear/x:y:z
+      $(arg rob_name)/vision_estimate/twist/twist/linear/x:y:z 
+    "
+  />
+<!--   <node pkg="rqt_plot" type="rqt_plot" name="plot_Sigma" output="screen" 
+    args="
+      $(arg rob_name)/vision_estimate/pose/covariance[0]
+      $(arg rob_name)/vision_estimate/pose/covariance[1]
+      $(arg rob_name)/vision_estimate/pose/covariance[2]
+      $(arg rob_name)/vision_estimate/twist/covariance[0]
+      $(arg rob_name)/vision_estimate/twist/covariance[1]
+      $(arg rob_name)/vision_estimate/twist/covariance[2]
+    "
+  /> -->
+
+  <!-- Simulation Ball: blue channel (#1) (intensity)  -->
+  <node name="blobDetector1" pkg="vision_general" type="blobDetector" respawn="false" output="screen">
+    <remap from="/image" to="/$(arg rob_name)/camera/camera_rgb/image_raw"/>
+    <remap from="/blob_pose" to="/$(arg rob_name)/camera_measurement"/>
+    <param name="CALIBRATE_FIRST_IMAGE_FLAG" type="int" value="0"/>
+    <param name="SHOW_IMAGE_FLAG" type="int" value="1"/>
+    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="TRACKING_FLAG" type="int" value="1"/>
+    <param name="COLOR_1" type="double" value="$(arg COLOR_1)"/>
+    <param name="COLOR_2" type="double" value="$(arg COLOR_2)"/>
+    <param name="COLOR_3" type="double" value="$(arg COLOR_3)"/>
+    <param name="VAR_1" type="double" value="$(arg VAR_1)"/>
+    <param name="VAR_2" type="double" value="$(arg VAR_2)"/>
+    <param name="VAR_3" type="double" value="$(arg VAR_3)"/>
+  </node>
+
+  <!-- Simulation Ball: blue channel (#1) (intensity)  -->
+  <node name="blobDetector2" pkg="vision_general" type="blobDetector" respawn="false" output="screen">
+    <remap from="/image" to="/$(arg opp_name)/camera/camera_rgb/image_raw"/>
+    <remap from="/blob_pose" to="/$(arg opp_name)/camera_measurement"/>
+    <param name="CALIBRATE_FIRST_IMAGE_FLAG" type="int" value="0"/>
+    <param name="SHOW_IMAGE_FLAG" type="int" value="0"/>
+    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="TRACKING_FLAG" type="int" value="1"/>
+    <param name="COLOR_1" type="double" value="$(arg COLOR_1)"/>
+    <param name="COLOR_2" type="double" value="$(arg COLOR_2)"/>
+    <param name="COLOR_3" type="double" value="$(arg COLOR_3)"/>
+    <param name="VAR_1" type="double" value="$(arg VAR_1)"/>
+    <param name="VAR_2" type="double" value="$(arg VAR_2)"/>
+    <param name="VAR_3" type="double" value="$(arg VAR_3)"/>
+  </node>
+
+  <!--  0: ground truth measurement
+        1: ground truth measurement with noise
+        2: Simple depth estimation from geometry and KF
+        3: EKF with nonlinear pinhole camera model
+        4: KF with R. Spica spherical target measurement -->
+  <node name="filter1" pkg="vision_general" type="filter" respawn="false" output="screen">
+    <remap from="/robot_pose" to="/$(arg rob_name)/ground_truth/odometry"/>
+    <remap from="/opponent_pose" to="/$(arg opp_name)/ground_truth/odometry"/>
+    <remap from="/measurement" to="/$(arg rob_name)/camera_measurement"/>
+    <remap from="/state_estimate" to="/$(arg rob_name)/vision_estimate"/>
+    <remap from="/state_estimate_gt" to="/$(arg rob_name)/vision_estimate_gt"/>
+    <remap from="/measurement_out" to="/$(arg rob_name)/measurement_out"/>
+    <remap from="/measurement_out_gt" to="/$(arg rob_name)/measurement_out_gt"/>
+    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="INITIAL_STATE_X1" type="double" value="1.0"/>
+    <param name="INITIAL_STATE_X2" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_X3" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_V1" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_V2" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_V3" type="double" value="0.0"/>
+    <param name="COVARIANCE_Q_X" type="double" value="0.0001"/>
+    <param name="COVARIANCE_Q_V" type="double" value="0.005"/>
+    <param name="COVARIANCE_R_X" type="double" value="0.0025"/>
+    <param name="COVARIANCE_R_Y" type="double" value="0.0025"/>
+    <param name="COVARIANCE_R_Z" type="double" value="0.0025"/>
+    <param name="FILTER_TYPE" type="int" value="2"/>
+    <param name="SPHERE_RADIUS" type="double" value="$(arg sphere_radius)"/>
+  </node>
+
+  <!--  0: ground truth measurement
+        1: ground truth measurement with noise and KF
+        2: Simple depth estimation from geometry
+        3: EKF with nonlinear pinhole camera model
+        4: KF with R. Spica spherical target measurement -->
+  <node name="filter2" pkg="vision_general" type="filter" respawn="false" output="screen">
+    <remap from="/robot_pose" to="/$(arg opp_name)/ground_truth/odometry"/>
+    <remap from="/opponent_pose" to="/$(arg rob_name)/ground_truth/odometry"/>
+    <remap from="/measurement" to="/$(arg opp_name)/camera_measurement"/>
+    <remap from="/state_estimate" to="/$(arg opp_name)/vision_estimate"/>
+    <remap from="/state_estimate_gt" to="/$(arg opp_name)/vision_estimate_gt"/>
+    <remap from="/measurement_out" to="/$(arg opp_name)/measurement_out"/>
+    <remap from="/measurement_out_gt" to="/$(arg opp_name)/measurement_out_gt"/>
+    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="INITIAL_STATE_X1" type="double" value="1.0"/>
+    <param name="INITIAL_STATE_X2" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_X3" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_V1" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_V2" type="double" value="0.0"/>
+    <param name="INITIAL_STATE_V3" type="double" value="0.0"/>
+    <param name="COVARIANCE_Q_X" type="double" value="0.0001"/>
+    <param name="COVARIANCE_Q_V" type="double" value="0.005"/>
+    <param name="COVARIANCE_R_X" type="double" value="0.0025"/>
+    <param name="COVARIANCE_R_Y" type="double" value="0.0025"/>
+    <param name="COVARIANCE_R_Z" type="double" value="0.0025"/>
+    <param name="FILTER_TYPE" type="int" value="2"/>
+    <param name="SPHERE_RADIUS" type="double" value="$(arg sphere_radius)"/>
+  </node>
+  
+
+</launch>

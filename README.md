@@ -41,3 +41,21 @@ This package contains an interfacing node and launch file for the mocap_optitrac
 * mocap.launch
     * Generic setup launch file that contains all available ROS parameters. Feel free to copy and simplify this file for your project's launch file. 
 
+# msl_rotors_simulation
+This package contains launch files for the ETH RotorR simulator with the MSL's additional models and URDF files (located in msl_rotors_gazebo and msl_rotors_description) 
+
+## Requirements
+* rotors_simulator
+* You must place a CATKIN_IGNORE file within rotors_simulator/rotors_hil_interface
+
+## Files
+* simulation.launch
+    * Launches two hummingbird quadrotors with yellow balls on top within headless Gazebo
+* blobTracking.launch
+    * Launches the blobDetector node for each quadrotor and the corresponding filters for the blob's location with respect to the local quadrotor frames. The output will be visualized with rqt_plot
+* waypoint_quad_control.cpp
+    * ROS node for controlling the quadrotors via joystick as well as image based yaw servoing (PD control on ball location) to keep the ball in the center of the image. 
+* /models
+    * folder contains mesh files and blender files for editing your quadrotor models
+* /resource
+    * folder containts yaml files for the new quadrotor models
