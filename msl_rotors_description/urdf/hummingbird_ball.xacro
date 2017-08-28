@@ -25,10 +25,10 @@ for Quadrocopter Control by Jian Wang et al.) -->
   <xacro:property name="namespace" value="$(arg namespace)" />
   <xacro:property name="rotor_velocity_slowdown_sim" value="10" />
   <xacro:property name="use_mesh_file" value="true" />
-  <xacro:property name="mesh_file" value="package://ec_rotors_description/meshes/hummingbird_ball_top.dae" />
-  <!-- <xacro:property name="mesh_file" value="package://ec_rotors_description/meshes/hummingbird_ball_only.dae" /> -->
-  <!-- <xacro:property name="mesh_file" value="package://ec_rotors_description/meshes/hummingbird_ball_center.dae" /> -->
-  <!-- <xacro:property name="mesh_file" value="package://ec_rotors_description/meshes/hummingbird_ball_bottom.dae" /> -->
+  <xacro:property name="mesh_file" value="package://msl_rotors_description/meshes/hummingbird_ball_top.dae" />
+  <!-- <xacro:property name="mesh_file" value="package://msl_rotors_description/meshes/hummingbird_ball_only.dae" /> -->
+  <!-- <xacro:property name="mesh_file" value="package://msl_rotors_description/meshes/hummingbird_ball_center.dae" /> -->
+  <!-- <xacro:property name="mesh_file" value="package://msl_rotors_description/meshes/hummingbird_ball_bottom.dae" /> -->
   <xacro:property name="mass" value="0.68" /> <!-- [kg] -->
   <xacro:property name="body_width" value="0.1" /> <!-- [m] -->
   <xacro:property name="body_height" value="0.12" /> <!-- [m] -->
@@ -56,7 +56,7 @@ for Quadrocopter Control by Jian Wang et al.) -->
   </xacro:property>
 
   <!-- Included URDF Files -->
-  <xacro:include filename="$(find ec_rotors_description)/urdf/multirotor_base.xacro" />
+  <xacro:include filename="$(find msl_rotors_description)/urdf/multirotor_base.xacro" />
 
   <!-- Instantiate multirotor_base_macro once -->
   <xacro:multirotor_base_macro
