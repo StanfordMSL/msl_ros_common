@@ -2,7 +2,7 @@
 
 <robot name="$(arg mav_name)" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Instantiate the mav with a generic odometry sensor. -->
-  <xacro:include filename="$(find ec_rotors_description)/urdf/mav_generic_odometry_sensor.gazebo" />
+  <xacro:include filename="$(find msl_rotors_description)/urdf/mav_generic_odometry_sensor.gazebo" />
 
   <!-- Add a simple camera sensor from component_snippests.xacro -->
   <xacro:camera_macro

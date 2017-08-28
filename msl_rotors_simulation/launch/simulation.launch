@@ -71,11 +71,11 @@
 
   <!-- ========== MAV 2 ========== -->
   <group ns="$(arg mav_name)2">
-    <include file="$(find ec_rotors_gazebo)/launch/spawn_mav.launch">
+    <include file="$(find msl_rotors_gazebo)/launch/spawn_mav.launch">
       <arg name="mav_name" value="$(arg mav_name)" />
       <arg name="namespace" value="$(arg mav_name)2" />
-      <!-- <arg name="model" value="$(find ec_rotors_description)/urdf/mav_with_vi_sensor.gazebo" /> -->
-      <arg name="model" value="$(find ec_rotors_description)/urdf/mav_with_rgb_camera.gazebo" />
+      <!-- <arg name="model" value="$(find msl_rotors_description)/urdf/mav_with_vi_sensor.gazebo" /> -->
+      <arg name="model" value="$(find msl_rotors_description)/urdf/mav_with_rgb_camera.gazebo" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg mav_name)2"/>
