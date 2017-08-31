@@ -172,6 +172,10 @@ void MoCapDataFormat::parse()
 
     // skip mean marker error
     seek(sizeof(float));
+
+    //!!NEEDED TO FIX BUG FOR MULTIPLE FRAMES!!
+    seek(2); //change this if node crashes w/multiple rigid bodies
+    //!!NEEDED TO FIX BUG FOR MULTIPLE FRAMES!!
   }
 
   // TODO: read skeletons
