@@ -415,13 +415,13 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "filter");
   ros::NodeHandle nh("~");
 
-  int DISPLAY_DATA_FLAG;
-  nh.param<int>("DISPLAY_DATA_FLAG", DISPLAY_DATA_FLAG, 0);
+  int display_data_FLAG;
+  nh.param<int>("display_data_FLAG", display_data_FLAG, 0);
   int CONTROLLER_INDEX;
   nh.param<int>("CONTROLLER_INDEX", CONTROLLER_INDEX, 0);
   
   waypointQuadControlClass control(
-    DISPLAY_DATA_FLAG, CONTROLLER_INDEX
+    display_data_FLAG, CONTROLLER_INDEX
   );
   
   while (ros::ok()) {

@@ -117,7 +117,7 @@ int main(int argc, char **argv)
   int frameIndex;
   nh.param<int>("COORDINATE_FRAME_INDEX", frameIndex, 0);
   int displayData;
-  nh.param<int>("DISPLAY_DATA_BOOL", displayData, 0);
+  nh.param<int>("display_data_flag", displayData, 0);
 
   mocapInterfaceClass poseEstimation(frameIndex, displayData);
 

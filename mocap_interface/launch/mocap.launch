@@ -50,18 +50,20 @@
     <remap from="/robot/pose" to="/robot_1/pose"/>
     <remap from="/robot/twist" to="/robot_1/twist"/>
     <param name="COORDINATE_FRAME_INDEX" type="int" value="0" />
-    <param name="DISPLAY_DATA_BOOL" type="int" value="0" />
+    <param name="display_data_flag" type="int" value="0" />
   </node> -->
 
   <!-- ========== MOCAP_INTERFACE_ODOM ========== -->
-  <node pkg="mocap_interface" type="mocap_interface_odom" name="mocap_interface_odom_1" respawn="false" launch-prefix="" required="true" output="screen">
+  <node pkg="mocap_interface" type="mocap_interface_odom" name="mocap_interface_odom" respawn="false" launch-prefix="" required="true" output="screen">
     <remap from="/robot/pose" to="/robot_1/pose"/>
     <remap from="/robot/odom" to="/robot_1/odom"/>
-    <param name="DISPLAY_DATA_BOOL" type="int" value="0" />
-    <param name="POSITION_COVARIANCE" type="double" value="0.0" />
-    <param name="ORIENTATION_COVARIANCE" type="double" value="0.0" />
-    <param name="VELOCITY_COVARIANCE" type="double" value="0.00001" />
-    <param name="ROTATION_RATE_COVARIANCE" type="double" value="0.000001" />
+    <remap from="/robot/accel" to="/robot_1/accel"/>
+    <param name="display_data_flag" type="int" value="1" />
+    <param name="publish_acceleration_flag" type="int" value="1" />
+    <rosparam param="covariance">[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                                  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                                  0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    </rosparam>
   </node>
 
   <!-- ========== UNCOMMENT BELOW TO ADD MORE ROBOTS ========== -->

@@ -47,7 +47,7 @@
     <remap from="/quad2_measurement" to="/$(arg mav_name)2/measurement_out_gt"/>
     <remap from="/quad1_command" to="/$(arg mav_name)1/command/trajectory"/>
     <remap from="/quad2_command" to="/$(arg mav_name)2/command/trajectory"/>
-    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="display_data_FLAG" type="int" value="0"/>
     <param name="CONTROLLER_INDEX" type="int" value="1"/>
   </node>
 
@@ -95,7 +95,7 @@
     <remap from="/blob_pose" to="/$(arg rob_name)/camera_measurement"/>
     <param name="CALIBRATE_FIRST_IMAGE_FLAG" type="int" value="0"/>
     <param name="SHOW_IMAGE_FLAG" type="int" value="1"/>
-    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="display_data_FLAG" type="int" value="0"/>
     <param name="TRACKING_FLAG" type="int" value="1"/>
     <param name="COLOR_1" type="double" value="$(arg COLOR_1)"/>
     <param name="COLOR_2" type="double" value="$(arg COLOR_2)"/>
@@ -111,7 +111,7 @@
     <remap from="/blob_pose" to="/$(arg opp_name)/camera_measurement"/>
     <param name="CALIBRATE_FIRST_IMAGE_FLAG" type="int" value="0"/>
     <param name="SHOW_IMAGE_FLAG" type="int" value="0"/>
-    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="display_data_FLAG" type="int" value="0"/>
     <param name="TRACKING_FLAG" type="int" value="1"/>
     <param name="COLOR_1" type="double" value="$(arg COLOR_1)"/>
     <param name="COLOR_2" type="double" value="$(arg COLOR_2)"/>
@@ -134,7 +134,7 @@
     <remap from="/state_estimate_gt" to="/$(arg rob_name)/vision_estimate_gt"/>
     <remap from="/measurement_out" to="/$(arg rob_name)/measurement_out"/>
     <remap from="/measurement_out_gt" to="/$(arg rob_name)/measurement_out_gt"/>
-    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="display_data_FLAG" type="int" value="0"/>
     <param name="INITIAL_STATE_X1" type="double" value="1.0"/>
     <param name="INITIAL_STATE_X2" type="double" value="0.0"/>
     <param name="INITIAL_STATE_X3" type="double" value="0.0"/>
@@ -163,7 +163,7 @@
     <remap from="/state_estimate_gt" to="/$(arg opp_name)/vision_estimate_gt"/>
     <remap from="/measurement_out" to="/$(arg opp_name)/measurement_out"/>
     <remap from="/measurement_out_gt" to="/$(arg opp_name)/measurement_out_gt"/>
-    <param name="DISPLAY_DATA_FLAG" type="int" value="0"/>
+    <param name="display_data_FLAG" type="int" value="0"/>
     <param name="INITIAL_STATE_X1" type="double" value="1.0"/>
     <param name="INITIAL_STATE_X2" type="double" value="0.0"/>
     <param name="INITIAL_STATE_X3" type="double" value="0.0"/>
