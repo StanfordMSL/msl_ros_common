@@ -1,0 +1,19 @@
+# We assume Z-Y-X Euler angles. 
+
+# Active transform from world frame (defined by optitrack) to desired world frame
+x: 0.0 
+y: 0.0
+z: 0.0
+yaw:   0.0       # Z angle
+pitch: -1.57079  # Y angle
+roll:  -1.57079  # X angle
+
+
+
+# Active transform from world frame to new robot local frame
+x2: 0.0 
+y2: 0.0
+z2: 0.0
+yaw2:   -3.1415  # Z angle
+pitch2: 0.0      # Y angle
+roll2:  1.5707   # X angle
