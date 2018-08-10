@@ -1,0 +1,27 @@
+<launch>
+
+	<node pkg="tf" type="static_transform_publisher" name="rviz_broadcaster" args="0 0 0 1.57079 0 1.57079 rviz optitrack 100" />
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen" 
+    args="-f rviz -d $(find frame_transformer)/rviz/frame_transformer.rviz" required="true">
+  </node>
+
+<!--   <node pkg="frame_transformer" type="frame_transformer.py" name="frame_transformer_quad3" respawn="false" launch-prefix="" required="true" output="screen">
+  	<remap from="src_pose" to="/vrpn_client_node/quad3/pose" />
+  	<remap from="dst_pose" to="/quad3/mavros/vision_pose/pose" />
+  	<param name="srcFrameID" value="optitrack"/>
+  	<param name="dstFrameID" value="map"/>
+  	<param name="dstLocalFrameID" value="quad3_new"/>
+    <rosparam file="$(find frame_transformer)/config/config.yaml" command="load" />
+  </node> -->
+
+  <node pkg="frame_transformer" type="frame_transformer.py" name="frame_transformer_quad4" respawn="false" launch-prefix="" required="true" output="screen">
+  	<remap from="src_pose" to="/vrpn_client_node/quad4/pose" />
+  	<remap from="dst_pose" to="/quad4/mavros/vision_pose/pose" />
+		<param name="srcFrameID" value="optitrack"/>
+  	<param name="dstFrameID" value="map"/>
+  	<param name="dstLocalFrameID" value="quad4_new"/>
+    <rosparam file="$(find frame_transformer)/config/config.yaml" command="load" />
+  </node>
+
+</launch>

@@ -4,14 +4,14 @@
 src2dst_x: 0.0 
 src2dst_y: 0.0
 src2dst_z: 0.0
-src2dst_yaw: 0.0 # Z angle
+src2dst_yaw: -1.57079 # Z angle
 src2dst_pitch: -1.57079 # Y angle
-src2dst_roll: -1.57079 # X angle
+src2dst_roll: 0.0 # X angle
 
 # Active, fixed transform from source frame (i.e., local robot frame w.r.t. source frame) to destination robot local frame (local robot frame w.r.t. destination frame)
 srcLocal2dstLocal_x: 0.0 
 srcLocal2dstLocal_y: 0.0
 srcLocal2dstLocal_z: 0.0
-srcLocal2dstLocal_yaw: -3.1415 # Z angle
-srcLocal2dstLocal_pitch: 0.0 # Y angle
-srcLocal2dstLocal_roll: 1.57079 # X angle
+srcLocal2dstLocal_yaw: -1.57079 # Z angle
+srcLocal2dstLocal_pitch: -1.57079 # Y angle
+srcLocal2dstLocal_roll: 0.0 # X angle
