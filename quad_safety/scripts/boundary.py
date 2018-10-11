@@ -26,11 +26,13 @@ class Safety:
 		self.isLanding = False
 		self.landed_boundary = 0.1 #check for "landed" drone
 		self.bounds = np.array(rospy.get_param('room_boundaries')) #first row - lower bounds; second row - upper bounds
+		self.landing_pose = PoseStamped()
+		self.landing_pose.pose.position.x = 0.0
+		self.landing_pose.pose.position.y = 0.0
+		self.landing_pose.pose.position.z = 1.0
 
 
 		#Initialize "safety services": landing, stopping, etc
-
-
 		rospy.loginfo("Waiting for services")
 		rospy.wait_for_service('mavros/cmd/land')
 		rospy.wait_for_service('mavros/set_mode')
@@ -40,7 +42,8 @@ class Safety:
 		self.land_service = rospy.ServiceProxy('mavros/cmd/land', CommandTOL)
 		self.home_service = rospy.ServiceProxy('mavros/cmd/set_home', CommandHome)
 		self.altitude_setter = rospy.ServiceProxy('mavros/param/set',ParamSet)
-		rospy.loginfo("Services set.")		
+		rospy.loginfo("Services set.")	
+
 		#Set altitude for forced landing return service
 		self.set_return_altitudes()
 
@@ -49,7 +52,7 @@ class Safety:
 		self.lat_long = None
 
 		self.state_sub = rospy.Subscriber('mavros/local_position/pose',PoseStamped,self.agentPoseCB)
-		self.global_position = rospy.Subscriber('mavros/global_position/raw/fix', NavSatFix, self.agentLatLong)
+		#self.global_position = rospy.Subscriber('mavros/global_position/raw/fix', NavSatFix, self.agentLatLong)
 
 
 		while self.position is None:
@@ -58,13 +61,14 @@ class Safety:
 		rospy.loginfo("Pose get!")
 		self.chatter.publish("Pose get!")
 
-		while self.lat_long is None:
-			rospy.loginfo("Waiting for GPS")
-			rospy.sleep(0.1)
-		rospy.loginfo("GPS get!")
-		self.chatter.publish("GPS get!")
+		# while self.lat_long is None:
+		# 	rospy.loginfo("Waiting for GPS")
+		# 	rospy.sleep(0.1)
+		# rospy.loginfo("GPS get!")
+		# self.chatter.publish("GPS get!")
+		self.local_pos_overwrite = rospy.Publisher('mavros/setpoint_position/local', PoseStamped,queue_size=10)
 
-		self.arm(1) #sets home coordinate now
+		#self.setMode(1) #sets home coordinate now
 
 	def agentPoseCB(self,msg):
 		agentPose = msg.pose
@@ -99,17 +103,17 @@ class Safety:
 		# 		rospy.loginfo(modeResponse)
 		# 	except rospy.ServiceException as e:
 		# 		rospy.loginfo("Clearance: mode switch failed: %s" %e)
-		if (mode == 1):
-			try:	            
-				#modeResponse = self.modeService(0, 'OFFBOARD')
-				homeResponse = self.home_service(1,0.0,0.0,0.0)
-				#rospy.loginfo(modeResponse)
-				rospy.loginfo(homeResponse)
-			except rospy.ServiceException as e:
-				rospy.loginfo("Clearance: mode switch failed: %s" %e)
-		elif (mode == 2):
+		# if (mode == 1):
+		# 	try:	            
+		# 		#modeResponse = self.modeService(0, 'OFFBOARD')
+		# 		homeResponse = self.home_service(1,0.0,0.0,0.0)
+		# 		#rospy.loginfo(modeResponse)
+		# 		rospy.loginfo(homeResponse)
+		# 	except rospy.ServiceException as e:
+		# 		rospy.loginfo("Clearance: mode switch failed: %s" %e)
+		if (mode == 2):
 			try:
-				modeResponse = self.modeService(0, 'AUTO.RTL')
+				modeResponse = self.modeService(0, 'AUTO.MISSION')
 				rospy.loginfo(modeResponse)
 			except rospy.ServiceException as e:
 				rospy.loginfo("Clearance: mode switch failed: %s" %e)
@@ -122,7 +126,6 @@ class Safety:
 		while not rospy.is_shutdown():
 			if self.isLanding and self.position[2] < self.landed_boundary:
 				exit()
-
 			if ((self.position < self.bounds[0]).any() or (self.position > self.bounds[1]).any()):
 				debug_text = np.array2string(self.position)
 				rospy.loginfo(debug_text)
@@ -134,9 +137,12 @@ class Safety:
 			rate.sleep()
 
 	def force_land(self):
+		#see how low i can go in this range
+		for i in range(50):
+			self.local_pos_overwrite.publish(self.landing_pose)		
 		self.setMode(2) #should probably change this to not "2"
-		rospy.loginfo(np.array2string(self.lat_long))
-		self.chatter.publish(np.array2string(self.lat_long))
+		rospy.loginfo(np.array2string(self.position))
+		self.chatter.publish(np.array2string(self.position))
 
 if __name__ == '__main__':
 	safety = Safety()
