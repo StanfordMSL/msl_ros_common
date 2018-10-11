@@ -1,0 +1,9 @@
+<launch>
+		<arg name="room_yaml" default="simulator.yaml"/>
+		<include file="$(find mslquad)/launch/quad_sim.launch"/>
+		<include file="$(find mslquad)/launch/joy.launch"/>
+	<group ns="quad0">
+		<rosparam command="load" file="$(find quad_safety)/launch/$(arg room_yaml)"/>
+		<node name="safety" pkg="quad_safety" type="boundary.py" output="screen" launch-prefix="gnome-terminal --command"/>
+	</group>
+</launch>

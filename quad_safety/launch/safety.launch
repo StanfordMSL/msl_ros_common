@@ -1,0 +1,8 @@
+<launch>
+		<arg name="room_yaml" default="flightroom.yaml"/>
+		<arg name="quad" default="quad3"/>
+	<group ns="$(arg quad)">
+		<rosparam command="load" file="$(find quad_safety)/launch/$(arg room_yaml)"/>
+		<node name="safety" pkg="quad_safety" type="boundary.py" output="screen" launch-prefix="gnome-terminal --command"/>
+	</group>
+</launch>
