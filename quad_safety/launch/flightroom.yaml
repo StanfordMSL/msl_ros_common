@@ -1,1 +1,1 @@
-room_boundaries: [[0,-2,0],[12,2,2]]
+room_boundaries: [[-1,-6,0],[1,-2,2]]

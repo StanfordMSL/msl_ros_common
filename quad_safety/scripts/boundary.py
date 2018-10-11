@@ -44,7 +44,7 @@ class Safety:
 		#Set altitude for forced landing return service
 		self.set_return_altitudes()
 
-		self.arm(0)
+		#self.arm(0)
 		self.position = None
 		self.lat_long = None
 
@@ -92,18 +92,18 @@ class Safety:
 			if altitude_response.success:
 				break
 
-	def arm(self,mode):
-		if (mode == 0):
-			try:
-				modeResponse = self.modeService(80, '')
-				rospy.loginfo(modeResponse)
-			except rospy.ServiceException as e:
-				rospy.loginfo("Clearance: mode switch failed: %s" %e)
-		elif (mode == 1):
+	def setMode(self,mode):
+		# if (mode == 0):
+		# 	try:
+		# 		modeResponse = self.modeService(80, '')
+		# 		rospy.loginfo(modeResponse)
+		# 	except rospy.ServiceException as e:
+		# 		rospy.loginfo("Clearance: mode switch failed: %s" %e)
+		if (mode == 1):
 			try:	            
-				modeResponse = self.modeService(0, 'OFFBOARD')
+				#modeResponse = self.modeService(0, 'OFFBOARD')
 				homeResponse = self.home_service(1,0.0,0.0,0.0)
-				rospy.loginfo(modeResponse)
+				#rospy.loginfo(modeResponse)
 				rospy.loginfo(homeResponse)
 			except rospy.ServiceException as e:
 				rospy.loginfo("Clearance: mode switch failed: %s" %e)
@@ -134,7 +134,7 @@ class Safety:
 			rate.sleep()
 
 	def force_land(self):
-		self.arm(2) #should probably change this to not "2"
+		self.setMode(2) #should probably change this to not "2"
 		rospy.loginfo(np.array2string(self.lat_long))
 		self.chatter.publish(np.array2string(self.lat_long))
 
