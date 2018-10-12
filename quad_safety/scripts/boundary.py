@@ -36,16 +36,16 @@ class Safety:
 		rospy.loginfo("Waiting for services")
 		rospy.wait_for_service('mavros/cmd/land')
 		rospy.wait_for_service('mavros/set_mode')
-		rospy.wait_for_service('mavros/cmd/set_home')
-		rospy.wait_for_service('mavros/param/set')
+		# rospy.wait_for_service('mavros/cmd/set_home')
+		# rospy.wait_for_service('mavros/param/set')
 		self.modeService = rospy.ServiceProxy('mavros/set_mode', SetMode)
-		self.land_service = rospy.ServiceProxy('mavros/cmd/land', CommandTOL)
-		self.home_service = rospy.ServiceProxy('mavros/cmd/set_home', CommandHome)
-		self.altitude_setter = rospy.ServiceProxy('mavros/param/set',ParamSet)
+		# self.land_service = rospy.ServiceProxy('mavros/cmd/land', CommandTOL)
+		# self.home_service = rospy.ServiceProxy('mavros/cmd/set_home', CommandHome)
+		# self.altitude_setter = rospy.ServiceProxy('mavros/param/set',ParamSet)
 		rospy.loginfo("Services set.")	
 
 		#Set altitude for forced landing return service
-		self.set_return_altitudes()
+		#self.set_return_altitudes()
 
 		#self.arm(0)
 		self.position = None
@@ -138,7 +138,7 @@ class Safety:
 
 	def force_land(self):
 		#see how low i can go in this range
-		for i in range(50):
+		for i in range(10):
 			self.local_pos_overwrite.publish(self.landing_pose)		
 		self.setMode(2) #should probably change this to not "2"
 		rospy.loginfo(np.array2string(self.position))
