@@ -8,7 +8,8 @@ from geometry_msgs.msg import PoseStamped, Pose
 from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from sensor_msgs.msg import BatteryState
-from Emergency.srv import Emergency
+from mslquad.srv import Emergency
+#from Emergency.srv import Emergency
 
 #boundary node, stripped to interface with new flight controller
 #Line 37: Need name 
@@ -45,6 +46,10 @@ class Safety:
 			rospy.sleep(0.1)
 		rospy.loginfo("Pose get!")
 
+		while self.battery_level is None:
+			rospy.loginfo("Waiting for state")
+			rospy.sleep(0.1)
+
 		#return position after boundary is trespassed
 		self.landing_pose.position.x = self.position[0]
 		self.landing_pose.position.y = self.position[1]
@@ -62,6 +67,7 @@ class Safety:
 		debug_text = ""
 		while not rospy.is_shutdown():
 			if self.battery_level < 11.0:
+				print(self.battery_level)
 				rospy.loginfo("Battery Voltage too low")
 				self.land_service(True, self.landing_pose,None)
 
