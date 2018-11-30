@@ -17,7 +17,6 @@ class Clearance:
     def __init__(self):
         rospy.init_node('clearance', anonymous=True)
         #set home position 
-        delay=rospy.get_param('~delay')
         self.state=None
 
         state_sub=rospy.Subscriber('mavros/state',State ,self.stateCB)
@@ -25,9 +24,6 @@ class Clearance:
         while self.state==None:
             #wait for state message
             rospy.sleep(.5)
-
-        #wait for mavros to boot and not be grumpy
-        rospy.sleep(delay)
 
     def stateCB(self, msg):
         self.state=msg
@@ -55,7 +51,7 @@ class Clearance:
                 rospy.loginfo("Clearance: mode switch failed: %s" %e)
             rospy.sleep(.5)
 
-        rospy.loginfo("Clearance: Vechicle cleared for takeoff")
+        rospy.loginfo("Clearance: Vehicle cleared for takeoff")
 
 if __name__ == '__main__':
     clear = Clearance()
