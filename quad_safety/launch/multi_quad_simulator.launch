@@ -12,7 +12,7 @@
     <arg name="verbose" default="false"/>
     <arg name="paused" default="false"/>
 
-    <node name="Overseer" pkg="quad_safety" type="overseer.py" output="screen" launch-prefix="gnome-terminal --command"/>
+    <node name="Overseer" pkg="quad_safety" type="overseer_stripped_sim.py" output="screen" launch-prefix="gnome-terminal --command"/>
 
     <!-- <node name="Overseer" pkg="quad_safety" type="overseer.py" output="screen" launch-prefix="gnome-terminal needstwodashes-command"/> -->
     <!-- Gazebo sim -->
