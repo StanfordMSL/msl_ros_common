@@ -25,10 +25,10 @@ class Safety:
 
 		#initialize variables of interest
 		self.refresh_rate = 10
-		self.propagation_time = 0.5 #if colliding with room in half a second (using linear d(t+0.5) = d(t) + v*0.5)
+		self.propagation_time = 0.25 #if colliding with room in 1/4 second (using linear d(t+dt) = d(t) + v*dt)
 		self.bounds = np.array(rospy.get_param('room_boundaries')) #first row - lower bounds; second row - upper bounds
 		self.landing_pose = Pose()
-		self.position = None
+		self.position = np.zeros((3,1))
 		self.velocity = np.zeros((3,1))
 		self.battery_level = None
 
@@ -37,14 +37,14 @@ class Safety:
 
 		#Initialize "safety services": landing, stopping, etc
 		rospy.loginfo("Waiting for services")
-		self.land_service = rospy.ServiceProxy('/' + self.quad_name +'/emergency', Emergency, persistent = True) #NEED SERVICE PROXY NAME AND TYPE (I assumed type = Pose)
+		self.land_service = rospy.ServiceProxy('/' + self.quad_name +'/emergency', Emergency, persistent = True) 
 		rospy.loginfo("Services set.")	
 
 		self.state_sub = rospy.Subscriber('mavros/local_position/pose',PoseStamped,self.agentPoseCB)
 		self.battery_sub = rospy.Subscriber('mavros/battery',BatteryState,self.agentBatteryVoltage)
 		self.velocity_sub = rospy.Subscriber('mavros/local_position/velocity',TwistStamped,self.agentVelocity)
 
-		while self.position is None:
+		while not self.position.any():
 			rospy.loginfo("Waiting for pose")
 			rospy.sleep(0.1)
 		rospy.loginfo("Pose get!")
@@ -53,14 +53,16 @@ class Safety:
 			rospy.loginfo("Waiting for state")
 			rospy.sleep(0.1)
 
-		#return position after boundary is trespassed
+		#intialize position after boundary is trespassed
 		self.landing_pose.position.x = self.position[0]
 		self.landing_pose.position.y = self.position[1]
 		self.landing_pose.position.z = 0
 
 	def agentPoseCB(self,msg):
-		agentPose = msg.pose
-		self.position = np.array([agentPose.position.x, agentPose.position.y, agentPose.position.z])
+		agentPose = msg.pose.position
+		self.position[0] = agentPose.x
+		self.position[1] = agentPose.y
+		self.position[2] = agentPose.z
 
 	def agentBatteryVoltage(self,msg):
 		self.battery_level = msg.voltage
@@ -87,6 +89,9 @@ class Safety:
 		rate = rospy.Rate(self.refresh_rate)
 		debug_text = ""
 		while not rospy.is_shutdown():
+			self.landing_pose.position.x = self.position[0]
+			self.landing_pose.position.y = self.position[1]
+
 			if self.battery_level < 11.0:
 				print(self.battery_level)
 				rospy.loginfo("Battery Voltage too low")
@@ -94,9 +99,16 @@ class Safety:
 
 			propagated_position = self.position + self.propagation_time*self.velocity
 
-			if ((propagated_position < self.bounds[0]).any() or (propagated_position > self.bounds[1]).any()):
+			lower_bounds_broken = (propagated_position < self.bounds[0])
+			upper_bounds_broken = (propagated_position > self.bounds[1])
+
+			if lower_bounds_broken.any() or upper_bounds_broken.any():
+				self.state_sub.unregister()
 				debug_text = np.array2string(self.position)
 				rospy.loginfo(debug_text)
+				move_away = 0.1 * (lower_bounds_broken - upper_bounds_broken) #scootch away from broken boundary
+				self.landing_pose.position.x += move_away[0]
+				self.landing_pose.position.y += move_away[1]
 				self.land_service(True,self.landing_pose,None)
 
 			rate.sleep()
