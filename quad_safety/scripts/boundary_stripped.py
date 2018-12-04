@@ -97,7 +97,7 @@ class Safety:
 				print(self.battery_level)
 				rospy.loginfo("Battery Voltage too low")
 				#self.land_service(True, self.landing_pose,None)
-				self.land_service(self.landing_pose)
+				#self.land_service(self.landing_pose)
 
 			propagated_position = self.position + self.propagation_time*self.velocity
 
@@ -111,7 +111,8 @@ class Safety:
 				move_away = 0.1 * (lower_bounds_broken - upper_bounds_broken) #scootch away from broken boundary
 				self.landing_pose.position.x += move_away[0]
 				self.landing_pose.position.y += move_away[1]
-				self.land_service(True,self.landing_pose,None)
+				#self.land_service(True,self.landing_pose,None)
+				self.land_service(self.landing_pose)
 
 			rate.sleep()
 
