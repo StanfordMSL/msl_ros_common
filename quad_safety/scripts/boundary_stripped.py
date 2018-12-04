@@ -9,6 +9,7 @@ from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from sensor_msgs.msg import BatteryState
 from mslquad.srv import Emergency
+from mslquad.srv import EmergencyLand
 #from Emergency.srv import Emergency
 
 #boundary node, stripped to interface with new flight controller
@@ -37,7 +38,7 @@ class Safety:
 
 		#Initialize "safety services": landing, stopping, etc
 		rospy.loginfo("Waiting for services")
-		self.land_service = rospy.ServiceProxy('/' + self.quad_name +'/emergency', Emergency, persistent = True) 
+		self.land_service = rospy.ServiceProxy('/' + self.quad_name +'/emergency_land', EmergencyLand, persistent = True) 
 		rospy.loginfo("Services set.")	
 
 		self.state_sub = rospy.Subscriber('mavros/local_position/pose',PoseStamped,self.agentPoseCB)
@@ -95,7 +96,8 @@ class Safety:
 			if self.battery_level < 11.0:
 				print(self.battery_level)
 				rospy.loginfo("Battery Voltage too low")
-				self.land_service(True, self.landing_pose,None)
+				#self.land_service(True, self.landing_pose,None)
+				self.land_service(self.landing_pose)
 
 			propagated_position = self.position + self.propagation_time*self.velocity
 
