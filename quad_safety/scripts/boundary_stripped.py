@@ -8,7 +8,7 @@ from geometry_msgs.msg import PoseStamped, Pose, TwistStamped
 from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from sensor_msgs.msg import BatteryState
-from mslquad.srv import Emergency
+#from mslquad.srv import Emergency
 from mslquad.srv import EmergencyLand
 #from Emergency.srv import Emergency
 
@@ -29,8 +29,8 @@ class Safety:
 		self.propagation_time = 0.25 #if colliding with room in 1/4 second (using linear d(t+dt) = d(t) + v*dt)
 		self.bounds = np.array(rospy.get_param('room_boundaries')) #first row - lower bounds; second row - upper bounds
 		self.landing_pose = Pose()
-		self.position = np.zeros((3,1))
-		self.velocity = np.zeros((3,1))
+		self.position = np.zeros(3)
+		self.velocity = np.zeros(3)
 		self.battery_level = None
 
 		self.quad_name = rospy.get_namespace()
@@ -74,18 +74,6 @@ class Safety:
 		self.velocity[1] = vel.y
 		self.velocity[2] = vel.z 
 
-	def collectVelocities(self,msg):
-		experimental = False
-		if self.all_velocities.shape[1] <= quad_idx: #number of cols < number of quads
-			num_cols = self.all_velocities.shape[1]
-			self.all_velocities = np.hstack((self.all_velocities, np.zeros((3, quad_idx-num_cols+1)))) #resize-as-you-go
-
-		vel = msg.twist.linear
-		self.all_velocities[:,quad_idx] = np.array([vel.x, vel.y, vel.z])
-
-		effective_pos = self.all_positions + self.propagation_time*self.all_velocities #Propagate position by propagation_time
-		quad_norms = np.square(np.linalg.norm(effective_pos,axis=0))
-
 	def run(self):
 		rate = rospy.Rate(self.refresh_rate)
 		debug_text = ""
@@ -101,18 +89,27 @@ class Safety:
 
 			propagated_position = self.position + self.propagation_time*self.velocity
 
-			lower_bounds_broken = (propagated_position < self.bounds[0])
-			upper_bounds_broken = (propagated_position > self.bounds[1])
+			# lower_bounds_broken = [px < bound for px, bound in zip(propagated_position, self.bounds[0,:])]
+			# upper_bounds_broken = [px > bound for px, bound in zip(propagated_position, self.bounds[1,:])]
+
+			lower_bounds_broken = np.less(propagated_position, self.bounds[0,:])
+			upper_bounds_broken = np.greater(propagated_position, self.bounds[1,:])
+
 
 			if lower_bounds_broken.any() or upper_bounds_broken.any():
+				rospy.logwarn("boundary violated")
 				self.state_sub.unregister()
 				debug_text = np.array2string(self.position)
 				rospy.loginfo(debug_text)
-				move_away = 0.1 * (lower_bounds_broken - upper_bounds_broken) #scootch away from broken boundary
+				move_away = 0.1 * (lower_bounds_broken.astype(float) - upper_bounds_broken.astype(float)) #scootch away from broken boundary
 				self.landing_pose.position.x += move_away[0]
 				self.landing_pose.position.y += move_away[1]
+				print(self.landing_pose.position)
 				#self.land_service(True,self.landing_pose,None)
-				self.land_service(self.landing_pose)
+				
+				while not self.land_service(self.landing_pose):
+					rospy.sleep(0.1)
+				break
 
 			rate.sleep()
 

@@ -1,6 +1,6 @@
 <launch>
 		<arg name="room_yaml" default="flightroom.yaml"/>
-		<arg name="quad" default="quad2"/>
+		<arg name="quad" default="quad4"/>
 	<group ns="$(arg quad)">
 		<rosparam command="load" file="$(find quad_safety)/launch/$(arg room_yaml)"/>
 		<node name="safety" pkg="quad_safety" type="boundary_stripped.py" output="screen" />
