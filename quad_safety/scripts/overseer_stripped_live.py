@@ -9,6 +9,9 @@ from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from mslquad.srv import Emergency
 
+#design suggestion: Create a "quad" class that stores position, velocity, battery state, and index
+#coalesce all of these ugly lists into one list of "quad" types
+
 import numpy as np
 
 
@@ -30,6 +33,7 @@ class Overseer:
 		self.position_subscribers = [] #list of subscriber nodes (SAME ORDER AS QUAD_NAMES)
 		self.velocity_subscribers = []
 		self.emergency_handlers = [] #list of emergency service proxies (one per quad)
+		self.battery_subscribers = []
 		self.all_positions = np.zeros((3,1))
 		self.all_velocities = np.zeros((3,1))
 		self.colliding_quads_and_waypoints = [] #triples of (quad_idx_1, quad_idx_2, midpoint) (NOT NAMES! NEED TO INDEX INTO QUAD_NAMES FOR THAT)
@@ -122,7 +126,8 @@ class Overseer:
 					self.quad_names.append(quad)
 					self.position_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/local_position/pose', PoseStamped,self.collectPositions,(num_quads)))
 					self.velocity_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/local_position/velocity', TwistStamped,self.collectVelocities,(num_quads))) 
-					self.emergency_handlers.append(rospy.ServiceProxy('/'+quad+'flyaway_service', FlyAway))
+					self.emergency_handlers.append(rospy.ServiceProxy('/'+quad+'/flyaway_service', FlyAway)) #VERY BAD VERY WRONG
+					self.battery_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/battery',BatteryState,self.BatteryVoltage, (num_quads))) #NOT DONE
 					num_quads+=1
 
 				dropped_quads = set(self.quad_names) - tmp_quad_names #quads that dropped out of the experiment, remove from lists

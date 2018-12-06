@@ -7,17 +7,17 @@ from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped, Twist,TwistStamped
 from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
+from sensor_msgs.msg import BatteryState
 from subprocess import call
 from mslquad.srv import Emergency
 
 import numpy as np
 
-#For flightroom: remove float i offset in collectPositions, and in prevent-collision, 
-#For final integration: remove force-kill condition
+#THIS IS ALWAYS MORE CURRENT THAN LIVE!!!! MAKE ALL EDITS HERE FIRST!
+#For flightroom: remove float i offset in collectPositions
 
 #TODO: Handle subscribers/handlers when quad leaves network
 #TODO: Overseer_stripped_flightroom (remove offset crap)
-
 
 class Overseer:
 
@@ -45,26 +45,6 @@ class Overseer:
 	def agentPoseCB(self,msg):
 		agentPose = msg.pose
 		self.position = np.array([agentPose.position.x, agentPose.position.y, agentPose.position.z])
-
-	def setMode(self,mode,idx):
-		if (mode == "Separate"):
-			try:
-				modeResponse = self.mode_services[idx](0, 'AUTO.MISSION')
-				rospy.loginfo(modeResponse)
-				return 1
-			except rospy.ServiceException as e:
-				rospy.loginfo("Clearance: mode switch failed: %s" %e)
-				return 0
-		if (mode == "Off"):
-			try:
-				armResponse = self.armService(False)
-				rospy.loginfo(armResponse)
-				return 1
-			except rospy.ServiceException as e:
-				rospy.loginfo("Clearance: mode switch failed: %s" %e)
-				return 0
-		rospy.sleep(.1) #debounce
-
 
 
 	def collectPositions(self,msg,quad_idx):
@@ -131,7 +111,7 @@ class Overseer:
 					self.quad_names.append(quad)
 					self.position_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/local_position/pose', PoseStamped,self.collectPositions,(num_quads)))
 					self.velocity_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/local_position/velocity', TwistStamped,self.collectVelocities,(num_quads))) 
-					self.emergency_handlers.append(rospy.ServiceProxy('/'+quad+'flyaway_service', FlyAway))
+					self.emergency_handlers.append(rospy.ServiceProxy('/'+quad+'/emergency', Emergency))
 					num_quads+=1
 
 				dropped_quads = set(self.quad_names) - tmp_quad_names #quads that dropped out of the experiment, remove from lists

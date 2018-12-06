@@ -42,7 +42,7 @@ class Safety:
 		rospy.loginfo("Services set.")	
 
 		self.state_sub = rospy.Subscriber('mavros/local_position/pose',PoseStamped,self.agentPoseCB)
-		self.battery_sub = rospy.Subscriber('mavros/battery',BatteryState,self.agentBatteryVoltage)
+		#self.battery_sub = rospy.Subscriber('mavros/battery',BatteryState,self.agentBatteryVoltage)
 		self.velocity_sub = rospy.Subscriber('mavros/local_position/velocity',TwistStamped,self.agentVelocity)
 
 		while not self.position.any():
@@ -65,8 +65,8 @@ class Safety:
 		self.position[1] = agentPose.y
 		self.position[2] = agentPose.z
 
-	def agentBatteryVoltage(self,msg):
-		self.battery_level = msg.voltage
+	# def agentBatteryVoltage(self,msg):
+	# 	self.battery_level = msg.voltage
 
 	def agentVelocity(self,msg):
 		vel = msg.twist.linear
