@@ -9,12 +9,19 @@ from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from sensor_msgs.msg import BatteryState
 from subprocess import call
-from mslquad.srv import Emergency
+
+
+from mslquad.srv import EmergencyLand
 
 import numpy as np
 
 #Beta version. More updated than plain sim. 
 #To make live: remove float i offset in collectPositions
+
+
+#Quad class has emergency handler; any edits to emergency service need to edit the handler
+#check battery calls the handler
+#force_move also calls handler
 
 class Quad:
 
@@ -29,7 +36,7 @@ class Quad:
 		self.position_subscriber = rospy.Subscriber('/'+self.name+'/mavros/local_position/pose', PoseStamped,self.collectPosition)
 		self.velocity_subscriber = rospy.Subscriber('/'+self.name+'/mavros/local_position/velocity', TwistStamped,self.collectVelocity)
 		self.battery_subscriber = rospy.Subscriber('/'+self.name+'/mavros/battery',BatteryState,self.collectVoltage)
-		self.emergency_handler =rospy.ServiceProxy('/'+self.name+'/emergency', Emergency)
+		self.emergency_handler =rospy.ServiceProxy('/'+self.name+'/emergency_land', EmergencyLand)
 
 	def collectPosition(self, msg):
 		pose = msg.pose.position
@@ -82,8 +89,8 @@ class Overseer:
 				p = Pose()
 				p.position.x = quad.position[0]
 				p.position.y = quad.position[1]
-				p.position.z = 0
-				quad.emergency_handler(True, p,None)
+				p.position.z = quad.position[2]
+				quad.emergency_handler(True, p)
 
 
 	def check_boundary(self):
@@ -154,23 +161,23 @@ class Overseer:
 		#ideally, velocities would be additive if multiple quads collide (multiple waypoints)
 		q1, q2 = item
 		midpoint = ((q1.position + q2.position)/2.0)
-		vel = Twist()
-		if np.linalg.norm(q1.position - q2.position) > self.safe_land_threshold:
-			rospy.loginfo("Quads " + q1.name + " and " + q2.name + " are safely apart. Landing now.")
-			p = Pose()
-			p.position.x = quad.position[0]
-			p.position.y = quad.position[1]
-			p.position.z = 0
-			quad.emergency_handler(True, p,None)
+		#vel = Twist()
+		p = Pose()
+		# if np.linalg.norm(q1.position - q2.position) > self.safe_land_threshold:
+		# 	rospy.loginfo("Quads " + q1.name + " and " + q2.name + " are safely apart. Landing now.")
+		# 	p.position.x = quad.position[0]
+		# 	p.position.y = quad.position[1]
+		# 	p.position.z = 0
+		# 	quad.emergency_handler(True, p)
 		
 		for quad in [q1, q2]:
-
 			diff = quad.position - midpt
-			gain = self.velocity_gain/np.linalg.norm(diff)
-			vel.linear.x = gain*diff[0]
-			vel.linear.y = gain*diff[1]
-			vel.linear.z = 0
-			quad.emergency_handler(False, None, vel)
+			newp = quad.position + diff
+			#gain = self.velocity_gain/np.linalg.norm(diff)
+			p.position.x = newp[0]
+			p.position.y = newp[1]
+			p.position.z = quad.position[2]
+			quad.emergency_handler(True, p)
 		
 
 if __name__ == '__main__':

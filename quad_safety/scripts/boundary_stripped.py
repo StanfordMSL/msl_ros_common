@@ -57,7 +57,7 @@ class Safety:
 		#intialize position after boundary is trespassed
 		self.landing_pose.position.x = self.position[0]
 		self.landing_pose.position.y = self.position[1]
-		self.landing_pose.position.z = 0
+		self.landing_pose.position.z = 0 #UPDATE LANDING POSE Z
 
 	def agentPoseCB(self,msg):
 		agentPose = msg.pose.position
@@ -80,6 +80,7 @@ class Safety:
 		while not rospy.is_shutdown():
 			self.landing_pose.position.x = self.position[0]
 			self.landing_pose.position.y = self.position[1]
+			self.landing_pose.position.z = self.position[2]
 
 			if self.battery_level < 11.0:
 				print(self.battery_level)
@@ -107,7 +108,7 @@ class Safety:
 				print(self.landing_pose.position)
 				#self.land_service(True,self.landing_pose,None)
 				
-				while not self.land_service(self.landing_pose):
+				while not self.land_service(True,self.landing_pose):
 					rospy.sleep(0.1)
 				break
 
