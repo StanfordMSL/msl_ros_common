@@ -17,6 +17,8 @@ import numpy as np
 
 #Beta version. More updated than plain sim. 
 #To make live: remove float i offset in collectPositions
+#remove sorted(list()) in first for loop of collect_quads (becuase that's only there for simulator)
+#remove part that says to remove in force_move
 
 
 #Quad class has emergency handler; any edits to emergency service need to edit the handler
@@ -36,7 +38,10 @@ class Quad:
 		self.position_subscriber = rospy.Subscriber('/'+self.name+'/mavros/local_position/pose', PoseStamped,self.collectPosition)
 		self.velocity_subscriber = rospy.Subscriber('/'+self.name+'/mavros/local_position/velocity', TwistStamped,self.collectVelocity)
 		self.battery_subscriber = rospy.Subscriber('/'+self.name+'/mavros/battery',BatteryState,self.collectVoltage)
-		self.emergency_handler =rospy.ServiceProxy('/'+self.name+'/emergency_land', EmergencyLand)
+		self.emergency_handler = rospy.ServiceProxy('/'+self.name+'/emergency_land', EmergencyLand)
+		self.is_avoiding = False #makes sure that quad if quad is already on avoidance course, its emergency handler will not get overwritten
+		self.avoid_position = np.zeros((3,1)) #checks when quad is close to its avoid position (used for landing) (remove once Emergency handles that internally)
+		self.is_landing = False #tells quad when to land (remove once Emergency handles internally)
 
 	def collectPosition(self, msg):
 		pose = msg.pose.position
@@ -67,20 +72,27 @@ class Overseer:
 	def __init__(self):
 		#Sleep if launched from launchfile
 		rospy.init_node('Overseer', anonymous = True)
-		self.chatter = rospy.Publisher('Overseer_debug', String, queue_size=10)
+		rospy.loginfo("Booting up.")
+
 
 
 		#TUNEABLE VARIABLES HERE
-		self.propagation_time = 0.7
-		self.collision_threshold = 0.5 #will need to tune this
-		self.safe_land_threshold = 2 #once colliding quads are this far away from each other, have them land
+		self.propagation_time = .75 #REDUCE
+		self.collision_threshold = 1.2 #will need to tune this
+		self.avoid_pos_threshold = 0.5 #once colliding quads are this close to their waypoints, have them land
 		self.battery_threshold = 11.0
-		self.velocity_gain = 0.5 #How strong velocity pushback acts on pair of quads (inversely proportional to distance to each other (can be found in force_move))
+		#self.velocity_gain = 0.5 #How strong velocity pushback acts on pair of quads (inversely proportional to distance to each other (can be found in force_move))
 
 
 		self.refresh_rate = 10
 		self.quads = []
 		self.colliding_quads = [] #triples of (quad1, quad2, midpoint)
+
+		self.collect_quads() #gather initial quad readout
+
+		rospy.sleep(0.5)
+
+		rospy.loginfo("Now running.")
 
 	def check_battery(self):
 		for quad in self.quads:
@@ -99,10 +111,11 @@ class Overseer:
 
 
 	def check_collision(self):
-		all_positions = [x.position for x in self.quads]
-		all_velocities = [x.velocity for x in self.quads]
+		all_positions = np.squeeze(np.array([x.position for x in self.quads])).T
+		all_velocities = np.squeeze(np.array([x.velocity for x in self.quads])).T
 
 		effective_pos = all_positions + self.propagation_time*all_velocities #Propagate position by propagation_time
+
 		quad_norms = np.square(np.linalg.norm(effective_pos,axis=0))
 		num_quads = quad_norms.shape[0]
 		for i in range(num_quads-1):
@@ -112,38 +125,39 @@ class Overseer:
 					q2 = self.quads[j]
 					if [q1, q2] not in self.colliding_quads:
 						rospy.loginfo("Quads "+ q1.name +" and "+ q2.name +" are in collision")
-						rospy.loginfo(q1.position)
-						rospy.loginfo(q2.position)
+						rospy.loginfo(np.squeeze(q1.position))
+						rospy.loginfo(np.squeeze(q2.position))
 						self.colliding_quads.append([q1,q2])
 
+	def collect_quads(self):
+		all_topics = rospy.get_published_topics()
+		all_topics = [topic[0].split('/') for topic in all_topics]
+		quad_list = [topic[1] for topic in all_topics if len(topic) > 1]
+		tmp_quad_names = set([name for name in quad_list if name.find("quad") != -1]) #need list for order; THIS IS BADDDD!!!! RELIES ON NAMESPACE CONFORMITY!!!!!!
+		current_quad_names = [x.name for x in self.quads]
+		current_quad_set = set(current_quad_names)
+		new_quads = tmp_quad_names - current_quad_set
+		num_quads = len(current_quad_names) #need to know from which quad we get msg, (boost::bind in C++), passed as callback arg
+		for quad in sorted(list(new_quads)):
+			self.quads.append(Quad(quad, num_quads))
+			num_quads+=1
+
+		dropped_quads = current_quad_set - tmp_quad_names #quads that dropped out of the experiment, remove from lists
+		for drop in dropped_quads:
+			loc = self.quads.index(drop)
+			self.quads[loc].destruct()
+			del self.quads[loc]
+			num_quads -= 1
 
 	def run(self):
 		rate = rospy.Rate(self.refresh_rate)
 		debug_text = ""
-		all_topics_old = set()
 		i = 1
 		while not rospy.is_shutdown():
 
 			#runs once per second
 			if (i % self.refresh_rate == 0):
-				all_topics = rospy.get_published_topics()
-				all_topics = [topic[0].split('/') for topic in all_topics]
-				quad_list = [topic[1] for topic in all_topics if len(topic) > 1]
-				tmp_quad_names = set([name for name in quad_list if name.find("quad") != -1]) #need list for order; THIS IS BADDDD!!!! RELIES ON NAMESPACE CONFORMITY!!!!!!
-				current_quad_names = [x.name for x in self.quads]
-				current_quad_set = set(current_quad_names)
-				new_quads = tmp_quad_names - current_quad_set
-				num_quads = len(current_quad_names) #need to know from which quad we get msg, (boost::bind in C++), passed as callback arg
-				for quad in new_quads:
-					self.quads.append(Quad(quad, num_quads))
-					num_quads+=1
-
-				dropped_quads = current_quad_set - tmp_quad_names #quads that dropped out of the experiment, remove from lists
-				for drop in dropped_quads:
-					loc = self.quads.index(drop)
-					self.quads[loc].destruct()
-					del self.quads[loc]
-					num_quads -= 1
+				self.collect_quads()
 
 			self.check_boundary()
 			self.check_battery()
@@ -161,23 +175,42 @@ class Overseer:
 		#ideally, velocities would be additive if multiple quads collide (multiple waypoints)
 		q1, q2 = item
 		midpoint = ((q1.position + q2.position)/2.0)
-		#vel = Twist()
 		p = Pose()
-		# if np.linalg.norm(q1.position - q2.position) > self.safe_land_threshold:
-		# 	rospy.loginfo("Quads " + q1.name + " and " + q2.name + " are safely apart. Landing now.")
-		# 	p.position.x = quad.position[0]
-		# 	p.position.y = quad.position[1]
-		# 	p.position.z = 0
-		# 	quad.emergency_handler(True, p)
 		
 		for quad in [q1, q2]:
-			diff = quad.position - midpt
-			newp = quad.position + diff
-			#gain = self.velocity_gain/np.linalg.norm(diff)
-			p.position.x = newp[0]
-			p.position.y = newp[1]
-			p.position.z = quad.position[2]
-			quad.emergency_handler(True, p)
+			# if quad.is_avoiding and not quad.is_landing:
+			# 	rospy.loginfo(quad.name)
+			# 	rospy.loginfo(quad.position)
+			# 	rospy.loginfo(quad.avoid_position)
+
+			if not quad.is_avoiding:
+				rospy.loginfo("Quad " + quad.name + " is avoiding.")
+				diff = quad.position - midpoint
+				newp = quad.position + 2*diff
+
+				rospy.loginfo(np.squeeze(quad.position))
+				rospy.loginfo(np.squeeze(newp))
+
+				newp[0] -= 2*float(quad.index) #REMOVE for LIVE
+				p.position.x = newp[0]
+				p.position.y = newp[1]
+				p.position.z = quad.position[2]
+				quad.is_avoiding = True
+				quad.emergency_handler(p)
+				newp[0] += 2*float(quad.index) #REMOVE FOR LIVE
+				quad.avoid_position = newp
+			elif not quad.is_landing and np.linalg.norm(quad.position-quad.avoid_position) < self.avoid_pos_threshold:
+				rospy.loginfo("Quad " + quad.name + " is now landing.")
+				p.position.x = quad.position[0] - 2*float(quad.index)
+				p.position.y = quad.position[1]
+				p.position.z = 0
+				quad.emergency_handler(p)
+				quad.is_landing = True
+
+		if q1.is_landing and q2.is_landing:
+			rospy.loginfo("Quads " + q1.name + " and " + q2.name + " are now safely landed.")
+			self.colliding_quads.remove([q1, q2])
+
 		
 
 if __name__ == '__main__':

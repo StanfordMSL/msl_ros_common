@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- MAVROS posix SITL environment launch script -->
+    <!-- launches Gazebo environment and 2x: MAVROS, PX4 SITL, and spawns vehicle -->
+    <!-- vehicle model and world -->
+    <!-- UAV1 -->
+    <group ns="quad1">
+        <!-- MAVROS and vehicle configs -->        
+        <node name="Clearance" pkg="quad_safety" type="clearance.py"/>
+
+    </group>
+    <!-- UAV2 -->
+    <group ns="quad2">
+        <!-- MAVROS and vehicle configs -->
+        
+        <node name="Clearance" pkg="quad_safety" type="clearance.py"/>
+    </group>
+
+
+    <group ns="quad3">
+        
+        <node name="Clearance" pkg="quad_safety" type="clearance.py"/>
+
+    </group>
+
+    <node name="Overseer" pkg="quad_safety" type="overseer_stripped_sim_with_quad_class.py" output="screen" launch-prefix="gnome-terminal --command"/>
+
+
+
+</launch>

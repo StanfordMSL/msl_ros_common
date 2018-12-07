@@ -4,11 +4,16 @@ import rospy
 import tf
 import std_msgs.msg
 from std_msgs.msg import String
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Pose, TwistStamped
 from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from sensor_msgs.msg import BatteryState
-from subprocess import call
+#from mslquad.srv import Emergency
+from mslquad.srv import EmergencyLand
+#from Emergency.srv import Emergency
+
+#boundary node, stripped to interface with new flight controller
+#Line 37: Need name 
 
 import numpy as np
 
@@ -17,119 +22,98 @@ class Safety:
 	def __init__(self):
 		#Sleep if launched from launchfile
 		rospy.init_node('safety', anonymous = True)
-		self.chatter = rospy.Publisher('safety_debug', String, queue_size=10)
 
 
 		#initialize variables of interest
 		self.refresh_rate = 10
+		self.propagation_time = 0.25 #if colliding with room in 1/4 second (using linear d(t+dt) = d(t) + v*dt)
 		self.bounds = np.array(rospy.get_param('room_boundaries')) #first row - lower bounds; second row - upper bounds
-		self.landing_pose = PoseStamped()
-		self.position = None
-		self.nodes_to_kill = set()
+		self.landing_pose = Pose()
+		self.position = np.zeros(3)
+		self.velocity = np.zeros(3)
 		self.battery_level = None
+
+		self.quad_name = rospy.get_namespace()
 
 
 		#Initialize "safety services": landing, stopping, etc
 		rospy.loginfo("Waiting for services")
-		rospy.wait_for_service('mavros/cmd/land')
-		rospy.wait_for_service('mavros/set_mode')
-		rospy.wait_for_service('mavros/cmd/arming')
-		self.armService = rospy.ServiceProxy('mavros/cmd/arming', CommandBool)
-		self.modeService = rospy.ServiceProxy('mavros/set_mode', SetMode)
+		self.land_service = rospy.ServiceProxy('/' + self.quad_name +'/emergency_land', EmergencyLand, persistent = True) 
 		rospy.loginfo("Services set.")	
 
 		self.state_sub = rospy.Subscriber('mavros/local_position/pose',PoseStamped,self.agentPoseCB)
-		self.battery_sub = rospy.Subscriber('mavros/battery',BatteryState,self.agentBatteryVoltage)
+		#self.battery_sub = rospy.Subscriber('mavros/battery',BatteryState,self.agentBatteryVoltage)
+		self.velocity_sub = rospy.Subscriber('mavros/local_position/velocity',TwistStamped,self.agentVelocity)
 
-		while self.position is None:
+		while not self.position.any():
 			rospy.loginfo("Waiting for pose")
 			rospy.sleep(0.1)
 		rospy.loginfo("Pose get!")
-		self.chatter.publish("Pose get!")
 
-		#return position after boundary is trespassed
-		self.landing_pose.pose.position.x = self.position[0]
-		self.landing_pose.pose.position.y = self.position[1]
-		self.landing_pose.pose.position.z = 0
+		while self.battery_level is None:
+			rospy.loginfo("Waiting for state")
+			rospy.sleep(0.1)
 
-		self.local_pos_overwrite = rospy.Publisher('mavros/setpoint_position/local', PoseStamped,queue_size=10)
-		self.setpoint_killer = rospy.Subscriber('mavros/setpoint_position/local', PoseStamped, self.log_publishing_nodes)
+		#intialize position after boundary is trespassed
+		self.landing_pose.position.x = self.position[0]
+		self.landing_pose.position.y = self.position[1]
+		self.landing_pose.position.z = 0 #UPDATE LANDING POSE Z
 
 	def agentPoseCB(self,msg):
-		agentPose = msg.pose
-		self.position = np.array([agentPose.position.x, agentPose.position.y, agentPose.position.z])
+		agentPose = msg.pose.position
+		self.position[0] = agentPose.x
+		self.position[1] = agentPose.y
+		self.position[2] = agentPose.z
 
-	def agentBatteryVoltage(self,msg):
-		self.battery_level = msg.voltage
+	# def agentBatteryVoltage(self,msg):
+	# 	self.battery_level = msg.voltage
 
-	def log_publishing_nodes(self,msg):
-		msg_header = msg._connection_header
-		self.nodes_to_kill.add(msg_header['callerid'])
-
-	def setMode(self,mode):
-		if (mode == "Land"):
-			try:
-				modeResponse = self.modeService(0, 'AUTO.MISSION')
-				rospy.loginfo(modeResponse)
-				return 1
-			except rospy.ServiceException as e:
-				rospy.loginfo("Clearance: mode switch failed: %s" %e)
-				return 0
-		if (mode == "Off"):
-			try:
-				armResponse = self.armService(False)
-				rospy.loginfo(armResponse)
-				return 1
-			except rospy.ServiceException as e:
-				rospy.loginfo("Clearance: mode switch failed: %s" %e)
-				return 0
-		rospy.sleep(.1) #debounce
-
-	def kill_other_setters(self):
-		l = list(self.nodes_to_kill)
-		for node in l:
-			call(["rosnode kill "+node], shell=True)
-
+	def agentVelocity(self,msg):
+		vel = msg.twist.linear
+		self.velocity[0] = vel.x 
+		self.velocity[1] = vel.y
+		self.velocity[2] = vel.z 
 
 	def run(self):
 		rate = rospy.Rate(self.refresh_rate)
 		debug_text = ""
 		while not rospy.is_shutdown():
-			if self.battery_level < 11.0:
-				rospy.loginfo("Battery Voltage too low")
-				self.force_land()
+			self.landing_pose.position.x = self.position[0]
+			self.landing_pose.position.y = self.position[1]
+			self.landing_pose.position.z = self.position[2]
 
-			if ((self.position < self.bounds[0]).any() or (self.position > self.bounds[1]).any()):
+			if self.battery_level < 11.0:
+				print(self.battery_level)
+				rospy.loginfo("Battery Voltage too low")
+				#self.land_service(True, self.landing_pose,None)
+				#self.land_service(self.landing_pose)
+
+			propagated_position = self.position + self.propagation_time*self.velocity
+
+			# lower_bounds_broken = [px < bound for px, bound in zip(propagated_position, self.bounds[0,:])]
+			# upper_bounds_broken = [px > bound for px, bound in zip(propagated_position, self.bounds[1,:])]
+
+			lower_bounds_broken = np.less(propagated_position, self.bounds[0,:])
+			upper_bounds_broken = np.greater(propagated_position, self.bounds[1,:])
+
+
+			if lower_bounds_broken.any() or upper_bounds_broken.any():
+				rospy.logwarn("boundary violated")
+				self.state_sub.unregister()
 				debug_text = np.array2string(self.position)
 				rospy.loginfo(debug_text)
-				self.chatter.publish(debug_text)
-				self.force_land()
+				move_away = 0.1 * (lower_bounds_broken.astype(float) - upper_bounds_broken.astype(float)) #scootch away from broken boundary
+				self.landing_pose.position.x += move_away[0]
+				self.landing_pose.position.y += move_away[1]
+				print(self.landing_pose.position)
+				#self.land_service(True,self.landing_pose,None)
+				
+				while not self.land_service(True,self.landing_pose):
+					rospy.sleep(0.1)
+				break
 
 			rate.sleep()
 
-	def force_land(self):
-		self.kill_other_setters()
-		for i in range(10):
-			self.local_pos_overwrite.publish(self.landing_pose)	
-		while not self.setMode("Land"):
-			rospy.sleep(0.1)
-		while (self.position[2] > 0.1):
-			for i in range(10):
-				self.local_pos_overwrite.publish(self.landing_pose)	
-			rospy.loginfo(np.array2string(self.position))
-			self.chatter.publish(np.array2string(self.position))
-			rospy.sleep(0.1)
-		while (True):
-			self.local_pos_overwrite.publish(self.landing_pose)
-			rospy.loginfo("Landing from here!")
-			if self.setMode("Off"):
-				break
-			rospy.sleep(0.1)
-		while (True):
-			self.local_pos_overwrite.publish(self.landing_pose)
-			rospy.loginfo("Quad is Landed")
-			rospy.sleep(0.1)
-		#exit()
 
 if __name__ == '__main__':
 	safety = Safety()

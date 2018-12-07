@@ -12,8 +12,6 @@
     <arg name="verbose" default="false"/>
     <arg name="paused" default="false"/>
 
-    <node name="Overseer" pkg="quad_safety" type="overseer_stripped_sim.py" output="screen" launch-prefix="gnome-terminal --command"/>
-
     <!-- <node name="Overseer" pkg="quad_safety" type="overseer.py" output="screen" launch-prefix="gnome-terminal needstwodashes-command"/> -->
     <!-- Gazebo sim -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -24,6 +22,9 @@
         <arg name="paused" value="$(arg paused)"/>
     </include>
     <!-- UAV1 -->
+        <include file ="$(find mslquad)/launch/pose_controller.launch">
+            <arg name="id" value="1" />
+        </include>
     <group ns="quad1">
         <!-- MAVROS and vehicle configs -->        
         <arg name="ID" value="1"/>
@@ -48,12 +49,14 @@
             <arg name="tgt_component" value="1"/>
         </include>
 
-        <node name="Pilot" pkg="quad_safety" type="sim_pilot.py"/>
 
-        <node name="Goal_setter" pkg="mslquad" type="goal_set.py" output="screen" launch-prefix="gnome-terminal --command"/>
 
-        <node name="Clearance" pkg="quad_safety" type="clearance.py"/>
+        <node name="Goal_setter" pkg="mslquad" type="goal_set.py" output = "screen" launch-prefix="gnome-terminal --command"/>
 
+    
+    <include file ="$(find mslquad)/launch/pose_controller.launch">
+            <arg name="id" value="2" />
+    </include>
     </group>
     <!-- UAV2 -->
     <group ns="quad2">
@@ -80,15 +83,17 @@
             <arg name="tgt_component" value="1"/>
         </include>
 
-        <node name="Pilot" pkg="quad_safety" type="sim_pilot.py"/>
+        
 
         <node name="Goal_setter" pkg="mslquad" type="goal_set.py" output = "screen" launch-prefix="gnome-terminal --command"/>
 
         
-        <node name="Clearance" pkg="quad_safety" type="clearance.py"/>
+        
     </group>
 
-
+    <include file ="$(find mslquad)/launch/pose_controller.launch">
+            <arg name="id" value="3" />
+        </include>
     <group ns="quad3">
         <!-- MAVROS and vehicle configs -->
         <arg name="ID" value="3"/>
@@ -113,14 +118,13 @@
             <arg name="tgt_component" value="1"/>
         </include>
 
-        <node name="Pilot" pkg="quad_safety" type="sim_pilot.py"/>
+        
 
         <node name="Goal_setter" pkg="mslquad" type="goal_set.py" output="screen" launch-prefix="gnome-terminal --command"/>
 
         
-        <node name="Clearance" pkg="quad_safety" type="clearance.py"/>
+        
 
-        <node name="flyaway_service" pkg="quad_safety" type="flyaway_service.py"/>
     </group>
 
 

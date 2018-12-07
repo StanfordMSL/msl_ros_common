@@ -23,7 +23,7 @@ class Sim_Pilot:
 		self.refresh_rate = 30
 		self.quad_pos = None
 		self.quad_goal = None
-		self.max_speed = 10
+		self.max_speed = 1
 		self.velocity_goal = Twist()
 		self.position_goal = PoseStamped()
 		self.position_goal.pose.position.x = 0.0

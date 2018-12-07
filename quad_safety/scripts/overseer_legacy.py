@@ -8,7 +8,6 @@ from geometry_msgs.msg import PoseStamped, Twist,TwistStamped
 from mavros_msgs.srv import SetMode, CommandBool
 from mavros_msgs.msg import State, ParamValue
 from subprocess import call
-from quad_safety.srv import *
 
 import numpy as np
 
@@ -103,21 +102,19 @@ class Overseer:
 		vel = msg.twist.linear
 		self.all_velocities[:,quad_idx] = np.array([vel.x, vel.y, vel.z])
 
-		effective_pos = self.all_positions + self.propagation_time*self.all_velocities #Propagate position by propagation_time
-		quad_norms = np.square(np.linalg.norm(effective_pos,axis=0))
-		num_quads = quad_norms.shape[0]
-		for i in range(num_quads):
-			if i == quad_idx:
-				continue
-			if abs(quad_norms[i] - quad_norms[quad_idx]) < self.collision_threshold and abs(quad_norms[i] + quad_norms[quad_idx] - 2*np.dot(effective_pos[:,i],effective_pos[:,quad_idx])) < self.collision_threshold:
-				rospy.loginfo("Quads "+ self.quad_names[i] +" and "+ self.quad_names[quad_idx] +" are in collision")
-				rospy.loginfo(self.all_positions[:,i])
-				rospy.loginfo(self.all_positions[:,quad_idx])
-				wpts = self.find_midpoint([i,quad_idx])
-				msg1 = str(wpts[:,0].tolist())+",,"+str(i)
-				msg2 = str(wpts[:,1].tolist())+",,"+str(quad_idx)
-				self.flyaway_services[i](msg1)
-				self.flyaway_services[quad_idx](msg2)				
+		if (self.all_positions.shape == self.all_velocities.shape):
+
+			effective_pos = self.all_positions + self.propagation_time*self.all_velocities #Propagate position by propagation_time
+			quad_norms = np.square(np.linalg.norm(effective_pos,axis=0))
+			num_quads = quad_norms.shape[0]
+			for i in range(num_quads):
+				if i == quad_idx:
+					continue
+				if abs(quad_norms[i] - quad_norms[quad_idx]) < self.collision_threshold and abs(quad_norms[i] + quad_norms[quad_idx] - 2*np.dot(effective_pos[:,i],effective_pos[:,quad_idx])) < self.collision_threshold:
+					rospy.loginfo("Quads "+ self.quad_names[i] +" and "+ self.quad_names[quad_idx] +" are in collision")
+					rospy.loginfo(self.all_positions[:,i])
+					rospy.loginfo(self.all_positions[:,quad_idx])
+					self.colliding_quads.append([i,quad_idx])			
 
 
 	def find_midpoint(self,colList):
@@ -158,12 +155,11 @@ class Overseer:
 					self.position_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/local_position/pose', PoseStamped,self.collectPositions,(num_quads)))
 					self.mode_services.append(rospy.ServiceProxy('/'+quad+'/mavros/set_mode', SetMode))
 					self.velocity_subscribers.append(rospy.Subscriber('/'+quad+'/mavros/local_position/velocity', TwistStamped,self.collectVelocities,(num_quads))) 
-					self.flyaway_services.append(rospy.ServiceProxy('/'+quad+'flyaway_service', FlyAway))
 					num_quads+=1
 
 					#REMOVE FOR FLIGHTROOM
-					# self.setpoint_killer.append(rospy.Subscriber('/'+quad+'/mavros/setpoint_velocity/cmd_vel_unstamped', Twist, self.log_publishing_nodes))
-					# self.setpoint_killer.append(rospy.Subscriber('/'+quad+'/mavros/setpoint_position/pose', PoseStamped, self.log_publishing_nodes))
+					self.setpoint_killer.append(rospy.Subscriber('/'+quad+'/mavros/setpoint_velocity/cmd_vel_unstamped', Twist, self.log_publishing_nodes))
+					self.setpoint_killer.append(rospy.Subscriber('/'+quad+'/mavros/setpoint_position/pose', PoseStamped, self.log_publishing_nodes))
 
 			self.force_move()
 
