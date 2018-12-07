@@ -23,7 +23,7 @@
 
     </group>
 
-    <node name="Overseer" pkg="quad_safety" type="overseer_stripped_sim_with_quad_class.py" output="screen" launch-prefix="gnome-terminal --command"/>
+    <node name="Overseer" pkg="quad_safety" type="overseer_sim.py" output="screen" launch-prefix="gnome-terminal --command"/>
 
 
 

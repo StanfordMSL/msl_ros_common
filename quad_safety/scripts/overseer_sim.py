@@ -77,8 +77,8 @@ class Overseer:
 
 
 		#TUNEABLE VARIABLES HERE
-		self.propagation_time = .75 #REDUCE
-		self.collision_threshold = 1.2 #will need to tune this
+		self.propagation_time = 1.1 
+		self.collision_threshold = 1.2 
 		self.avoid_pos_threshold = 0.5 #once colliding quads are this close to their waypoints, have them land
 		self.battery_threshold = 11.0
 		#self.velocity_gain = 0.5 #How strong velocity pushback acts on pair of quads (inversely proportional to distance to each other (can be found in force_move))

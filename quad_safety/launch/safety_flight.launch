@@ -3,6 +3,6 @@
 		<arg name="quad" default="quad4"/>
 	<group ns="$(arg quad)">
 		<rosparam command="load" file="$(find quad_safety)/launch/$(arg room_yaml)"/>
-		<node name="safety" pkg="quad_safety" type="boundary_stripped.py" output="screen" />
+		<node name="safety" pkg="quad_safety" type="boundary.py" output="screen" />
 	</group>
 </launch>
